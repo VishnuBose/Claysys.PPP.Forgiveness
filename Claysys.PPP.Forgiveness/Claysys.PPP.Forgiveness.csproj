@@ -33,7 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject />
+    <StartupObject>Claysys.PPP.Forgiveness.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -58,6 +58,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="controller\LoanDocumentResponse.cs" />
     <Compile Include="controller\SbaLoanDocumentsController.cs" />
     <Compile Include="controller\SbaLoanForgivenessController.cs" />
     <Compile Include="controller\SbaLoanForgivenessMessageController.cs" />

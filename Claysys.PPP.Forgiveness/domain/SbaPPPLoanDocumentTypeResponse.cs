@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace sbaCSharpClient.domain
+namespace Claysys.PPP.Forgiveness.domain
 {
 	public class SbaPPPLoanDocumentTypeResponse
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace sbaCSharpClient.domain
+namespace Claysys.PPP.Forgiveness.domain
 {
 	public class SbaPPPLoanForgivenessStatusResponse
     {
@@ -17,5 +17,6 @@ namespace sbaCSharpClient.domain
         public DateTime created{ get; set;}
 
         public string assigned_to_user{ get; set;}
+        public string Status { get; set; }
     }
 }

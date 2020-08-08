@@ -1,4 +1,4 @@
-﻿namespace sbaCSharpClient.domain
+﻿namespace Claysys.PPP.Forgiveness.domain
 {
     public class LoanDocumentType
     {

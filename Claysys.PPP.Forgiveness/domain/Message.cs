@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace sbaCSharpClient.domain
+namespace Claysys.PPP.Forgiveness.domain
 {
 	public class Message
     {

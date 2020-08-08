@@ -14,6 +14,9 @@ namespace Claysys.PPP.Forgiveness.Model
         public string Entity_Name { get; set; }
         public float pppLoanAmount { get; set; }
         public int einSsn { get; set; }
-      
+        public string applicationStatus { get; set; }
+        public string error { get; set; }
+        public string slug { get; set; }
+
     }
 }

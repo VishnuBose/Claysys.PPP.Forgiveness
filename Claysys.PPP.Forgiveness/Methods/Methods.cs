@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Claysys.PPP.Forgiveness.Model;
 using Newtonsoft.Json;
-using sbaCSharpClient.controller;
-using sbaCSharpClient.domain;
-using sbaCSharpClient.restclient;
-using sbaCSharpClient.service;
+using Claysys.PPP.Forgiveness.controller;
+using Claysys.PPP.Forgiveness.domain;
+using Claysys.PPP.Forgiveness.restclient;
+using Claysys.PPP.Forgiveness.service;
 
-namespace sbaCSharpClient
+namespace Claysys.PPP.Forgiveness.Methods
 {
     public static class Methods
     {
+        public static string pppLoanDocuments;
+
         private static async Task getSbaLoanRequestStatus(SbaLoanForgivenessController sbaLoanForgiveness)
         {
             SbaPPPLoanDocumentTypeResponse loanDocumentType =
@@ -21,46 +23,53 @@ namespace sbaCSharpClient
             {
                 var serialized = JsonConvert.SerializeObject(loanDocumentType,
                     new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
+                Utility.Utility.LogAction($"{Environment.NewLine}{serialized}{Environment.NewLine}");
             }
         }
 
-        private static async Task getSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness)
+        public static async Task<SbaPPPLoanForgivenessStatusResponse> getAllForgivenessRequests(SbaLoanForgivenessController sbaLoanForgiveness)
         {
-            SbaPPPLoanForgiveness loanDocumentType =
-                await sbaLoanForgiveness.getSbaLoanForgiveness("2",
-                    "ppp_loan_document_types"); // loanForgivenessUrl - to be passed
-            if (loanDocumentType != null)
-            {
-                var serialized = JsonConvert.SerializeObject(loanDocumentType,
-                    new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
-            }
+            SbaPPPLoanForgivenessStatusResponse allForgivenessRequests =
+                await sbaLoanForgiveness.getAllForgivenessRequests("ppp_loan_forgiveness_requests");
+            return allForgivenessRequests;
         }
 
-        private static async Task getSbaLoanForgivenessBySlug(SbaLoanForgivenessController sbaLoanForgiveness)
+        public static async Task<SbaPPPLoanForgiveness> getSbaLoanForgivenessBySlug(SbaLoanForgivenessController sbaLoanForgiveness, string slug)
         {
-            SbaPPPLoanForgiveness loanDocumentType =
-                await sbaLoanForgiveness.getSbaLoanForgivenessBySlug("2",
-                    "ppp_loan_document_types"); // loanForgivenessUrl - to be passed
-            if (loanDocumentType != null)
-            {
-                var serialized = JsonConvert.SerializeObject(loanDocumentType,
-                    new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
-            }
+            SbaPPPLoanForgiveness sbaLoanForgivenessBySlug =
+                await sbaLoanForgiveness.getSbaLoanForgivenessBySlug(slug, "ppp_loan_forgiveness_requests");
+            return sbaLoanForgivenessBySlug;
         }
 
-        private static void deleteSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness)
+        public static async Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessRequestBySbaNumber(string sbaNumber, SbaLoanForgivenessController sbaLoanForgiveness)
         {
-            sbaLoanForgiveness.deleteSbaLoanForgiveness("2", "ppp_loan_document_types"); // loanForgivenessUrl - to be passed
-            Console.WriteLine("------------------------------------------------------------------------");
+            SbaPPPLoanForgivenessStatusResponse loanForgivenessStatusResponse =
+                await sbaLoanForgiveness.getForgivenessRequestBysbaNumber(sbaNumber, "ppp_loan_forgiveness_requests");
+            return loanForgivenessStatusResponse;
         }
 
-        public static async Task InvokeSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, SbaForgiveness sbaForgivenessobj)
+        public static async Task<SbaPPPLoanDocumentTypeResponse> getDocumentTypes(SbaLoanForgivenessController sbaLoanForgiveness)
+        {
+            SbaPPPLoanDocumentTypeResponse loanDocumentType =
+                await sbaLoanForgiveness.getDocumenttypes("ppp_loan_document_types");
+            return loanDocumentType;
+        }
+
+        public static async Task<SbaPPPLoanMessagesResponse> getForgivenessMessagesBySbaNumber(SbaLoanForgivenessMessageController sbaLoanForgivenessMessageControllers, int page, String sbaNumber, bool isComplete)
+        {
+            SbaPPPLoanMessagesResponse sbaPppLoanMessagesResponse =
+                await sbaLoanForgivenessMessageControllers.getForgivenessMessagesBySbaNumber(page, sbaNumber, isComplete,
+                    "ppp_loan_forgiveness_messages");
+            return sbaPppLoanMessagesResponse;
+        }
+
+
+        public static async Task<bool> deleteSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, string slug, string sbaNumber)
+        {
+            return await sbaLoanForgiveness.deleteSbaLoanForgiveness(slug, sbaNumber, "ppp_loan_document_types"); // loanForgivenessUrl - to be passed
+        }
+
+        public static async Task<SbaPPPLoanForgiveness> InvokeSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, SbaForgiveness sbaForgivenessobj)
         {
             Race race = new Race
             {
@@ -153,28 +162,52 @@ namespace sbaCSharpClient
             {
                 var serialized = JsonConvert.SerializeObject(sbaPppLoanForgiveness,
                     new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
+                Utility.Utility.LogAction($"{Environment.NewLine}{serialized}{Environment.NewLine}");
+                return sbaPppLoanForgiveness;
             }
+            else
+            {
+                Utility.Utility.LogAction("Invoke method in Method.cs failed to return SbaPPPLoanForgiveness object with values.");
+            }
+            return new SbaPPPLoanForgiveness();
         }
 
-        private static async Task submitLoanDocument(SbaLoanDocumentsController sbaLoanDocuments)
+        public static async Task uploadForgivenessDocument(SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber)
+        {
+            LoanDocumentResponse response = await uploadForgivenessDocument(sbaLoanDocuments.DocumentName, sbaLoanDocuments.documentType, sbaLoanDocuments.etranId, sbaLoanDocuments.rawDocument
+          , "ppp_loan_documents", sbaLoanDocuments, sbaNumber);
+
+            string serialized = JsonConvert.SerializeObject(response,
+               new JsonSerializerSettings { DateFormatHandling = DateFormatHandling.IsoDateFormat });
+
+        }
+
+        public static async Task<LoanDocumentResponse> uploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, string document, string apiMethod, SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber)
+        {
+
+            LoanDocumentResponse loanDocument = await sbaLoanDocuments.uploadForgivenessDocument(requestName,
+                    requestDocument_type, etran_loan, document, apiMethod, sbaNumber);
+            return loanDocument;
+        }
+
+
+        public static async Task submitLoanDocument(SbaLoanDocumentsController sbaLoanDocuments)
         {
             LoanDocument request = new LoanDocument
             {
-                slug = "e4dd77f4-18a4-428a-a26b-c5e9ed19133a",
-                name = "testUpload",
-                created_at = Convert.ToDateTime("2020-06-28T19:38:52.009454Z"),
-                updated_at = Convert.ToDateTime("2020-06-28T19:38:52.009482Z"),
+                slug = "5777a53a-350b-4d1c-b169-e29e5e2001c2",
+                name = "sample.pdf",
+                created_at = Convert.ToDateTime("2020-08-04T09:07:04.508730Z"),
+                updated_at = Convert.ToDateTime("2020-08-04T09:07:04.508757Z"),
                 document =
-                    "https://lenders-cooperative-sandbox-app.s3.us-gov-west-1.amazonaws.com/media/loan/e4dd77f4-18a4-428a-a26b-c5e9ed19133a/files/testUpload.docx?AWSAccessKeyId=AKIAQ2EGUESVW7SZX5UO&Signature=TZZBJ%2BGKnpvDBvcnvktCLPmkT10%3D&Expires=1593381648",
+                    "https://lenders-cooperative-sandbox-app.s3.us-gov-west-1.amazonaws.com/media/loan/5777a53a-350b-4d1c-b169-e29e5e2001c2/files/sample.pdf?AWSAccessKeyId=AKIAQ2EGUESVZTJ6OS4N&Signature=8g38qCB9N63ppoJiTao3Z2J1VHI%3D&Expires=1596532039",
                 url =
-                    "https://lenders-cooperative-sandbox-app.s3.us-gov-west-1.amazonaws.com/media/loan/e4dd77f4-18a4-428a-a26b-c5e9ed19133a/files/testUpload.docx?AWSAccessKeyId=AKIAQ2EGUESVW7SZX5UO&Signature=TZZBJ%2BGKnpvDBvcnvktCLPmkT10%3D&Expires=1593381648",
-                etran_loan = "a82c54eb-36f3-460b-ad1d-1c7a6cde4d07",
+                    "https://sandbox.forgiveness.sba.gov/loans/doc_download_file/5777a53a-350b-4d1c-b169-e29e5e2001c2",
+                etran_loan = "4312ef27-f54e-49e1-8606-c3b761944420",
                 document_type = new LoanDocumentType
                 {
                     id = 1,
-                    name = "Payroll",
+                    name = "Loan Application Supporting Docs (Payroll)",
                     description = "Payroll Documents"
                 }
             };
@@ -184,12 +217,11 @@ namespace sbaCSharpClient
             {
                 var serialized = JsonConvert.SerializeObject(loanDocument,
                     new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
+                Utility.Utility.LogAction($"{Environment.NewLine}{serialized}{Environment.NewLine}");
             }
         }
 
-        private static async Task getSbaLoanDocumentTypeById(SbaLoanDocumentsController sbaLoanDocuments)
+        public static async Task getSbaLoanDocumentTypeById(SbaLoanDocumentsController sbaLoanDocuments)
         {
             LoanDocumentType loanDocumentType =
                 await sbaLoanDocuments.getSbaLoanDocumentTypeById(2, "ppp_loan_document_types"); // loanForgivenessUrl - to be passed
@@ -197,28 +229,10 @@ namespace sbaCSharpClient
             {
                 var serialized = JsonConvert.SerializeObject(loanDocumentType,
                     new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
+                Utility.Utility.LogAction($"{Environment.NewLine}{serialized}{Environment.NewLine}");
             }
         }
 
-        private static async Task getDocumentTypes(SbaLoanDocumentsController sbaLoanDocuments)
-        {
-            Dictionary<string, string> reqParams = new Dictionary<string, string>();
-            reqParams.Add("name", "test");
-            reqParams.Add("description", "test");
-            reqParams.Add("page", "test");
-
-            SbaPPPLoanDocumentTypeResponse documentTypes =
-                await sbaLoanDocuments.getDocumentTypes(reqParams, "ppp_loan_document_types");
-            if (documentTypes != null)
-            {
-                var serialized = JsonConvert.SerializeObject(documentTypes,
-                    new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
-            }
-        }
 
         private static async Task updateSbaLoanMessageReply(SbaLoanForgivenessMessageController sbaLoanForgivenessMessageController)
         {
@@ -232,25 +246,10 @@ namespace sbaCSharpClient
             {
                 var serialized = JsonConvert.SerializeObject(sbaLoanMessageReply,
                     new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
+                Utility.Utility.LogAction($"{Environment.NewLine}{serialized}{Environment.NewLine}");
             }
         }
 
-        private static async Task getSbaLoanMessages(SbaLoanForgivenessMessageController sbaLoanForgivenessMessageController)
-        {
-            SbaPPPLoanMessagesResponse sbaPppLoanMessagesResponse =
-                await sbaLoanForgivenessMessageController.getSbaLoanMessages(1, "test", true,
-                    "ppp_loan_forgiveness_messages");
-
-            if (sbaPppLoanMessagesResponse != null)
-            {
-                var serialized = JsonConvert.SerializeObject(sbaPppLoanMessagesResponse,
-                    new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
-            }
-        }
 
         private static async Task getLoanMessagesBySlug(SbaLoanForgivenessMessageController sbaLoanForgivenessMessageController)
         {
@@ -262,9 +261,14 @@ namespace sbaCSharpClient
             {
                 var serialized = JsonConvert.SerializeObject(loanMessagesBySlug,
                     new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
-                Console.WriteLine($"{Environment.NewLine}{serialized}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
+                Utility.Utility.LogAction($"{Environment.NewLine}{serialized}{Environment.NewLine}");
             }
         }
+
+        //public static async Task<bool> deleteSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness)
+        //{
+        //    return await sbaLoanForgiveness.deleteSbaLoanForgiveness(slug, pppLoanDocumentTypes);
+        //}
     }
+
 }

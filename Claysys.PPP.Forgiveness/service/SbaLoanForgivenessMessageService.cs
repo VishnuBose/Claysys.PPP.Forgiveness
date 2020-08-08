@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Claysys.PPP.Forgiveness.domain;
-using sbaCSharpClient.domain;
-using sbaCSharpClient.restclient;
+using Claysys.PPP.Forgiveness.restclient;
 
-namespace sbaCSharpClient.service
+namespace Claysys.PPP.Forgiveness.service
 {
     public class SbaLoanForgivenessMessageService
     {
@@ -17,19 +16,19 @@ namespace sbaCSharpClient.service
 
         public Task<MessageReply> updateSbaLoanMessageReply(MessageReply request, string loanForgivenessMessageUrl)
         {
-            Console.WriteLine("Processing Update LoanForgiveness Message Reply");
+            Utility.Utility.LogAction("Processing Update LoanForgiveness Message Reply");
             return sbaRestApiClient.updateSbaLoanForgivenessMessageReply(request, loanForgivenessMessageUrl);
         }
 
-        public Task<SbaPPPLoanMessagesResponse> getSbaLoanMessages(int page, String sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
+        public Task<SbaPPPLoanMessagesResponse> getForgivenessMessagesBySbaNumber(int page, String sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
         {
-            Console.WriteLine("Retreiving LoanForgiveness Request Messages by SBA Number");
-            return sbaRestApiClient.getSbaLoanMessagesBySbaNumber(page, sbaNumber, isComplete, loanForgivenessMessageUrl);
+            Console.WriteLine("Retreiving Forgiveness Request Messages by SBA Number");
+            return sbaRestApiClient.getForgivenessMessagesBySbaNumber(page, sbaNumber, isComplete, loanForgivenessMessageUrl);
         }
 
         public Task<SbaPPPLoanForgivenessMessage> getLoanMessagesBySlug(string slug, string loanForgivenessMessageUrl)
         {
-            Console.WriteLine("Retreiving LoanForgiveness Message");
+            Utility.Utility.LogAction("Retreiving LoanForgiveness Message");
             return sbaRestApiClient.getSbaLoanForgivenessMessagesBySlug(slug, loanForgivenessMessageUrl);
         }
     }

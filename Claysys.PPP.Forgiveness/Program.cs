@@ -14,12 +14,20 @@ namespace Claysys.PPP.Forgiveness
         /// </summary>
         static void Main()
         {
-            ServiceBase[] ServicesToRun;
-            ServicesToRun = new ServiceBase[]
+            if (System.Environment.CommandLine.ToString().ToLower().Contains("--debug"))
             {
+                var forgivessObj = new Claysys.PPP.Forgiveness.PPPForgiveness();
+                forgivessObj.Init();
+            }
+            else
+            {
+                ServiceBase[] ServicesToRun;
+                ServicesToRun = new ServiceBase[]
+                {
                 new PPPForgiveness()
-            };
-            ServiceBase.Run(ServicesToRun);
+                };
+                ServiceBase.Run(ServicesToRun);
+            }
         }
     }
 }
