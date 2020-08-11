@@ -31,329 +31,291 @@ namespace Claysys.PPP.Forgiveness.restclient
             vendorKey = VendorKey;
         }
 
-        public async Task<SbaPPPLoanForgiveness> invokeSbaLoanForgiveness(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
+        public async Task<SbaPPPLoanForgiveness> InvokeSbaLoanForgiveness(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
 
         {
             string _updateProcName = ConfigurationManager.AppSettings["TestDataSPStatus"];
             string connectionString = ConfigurationManager.ConnectionStrings["condata"].ConnectionString;
-            try
+
+            var serialized = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
+
+            RestClient restClient = new RestClient($"{baseUri}/{loanForgivenessUrl}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.POST);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            restRequest.AddParameter("application/json", serialized, ParameterType.RequestBody);
+            IRestResponse response = await restClient.ExecuteAsync(restRequest);
+            double sbaNumber = Convert.ToDouble(request.etran_loan.sba_number);
+            using (SqlConnection _sqlCon = new SqlConnection(connectionString))
             {
+                SbaPPPLoanForgiveness sbaPPPLoanForgiveness = null;
 
-                var serialized = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
+                _sqlCon.Open();
+                SqlCommand sql_cmnd = new SqlCommand(_updateProcName, _sqlCon);
 
-                RestClient restClient = new RestClient($"{baseUri}/{loanForgivenessUrl}/");
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.POST);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddHeader("Content-Type", "application/json");
-                restRequest.AddParameter("application/json", serialized, ParameterType.RequestBody);
-                IRestResponse response = await restClient.ExecuteAsync(restRequest);
-                double sbaNumber = Convert.ToDouble(request.etran_loan.sba_number);
-                using (SqlConnection _sqlCon = new SqlConnection(connectionString))
+                if (response.IsSuccessful)
                 {
-                    SbaPPPLoanForgiveness sbaPPPLoanForgiveness = null;
-                    try
-                    {
-                        _sqlCon.Open();
-                        SqlCommand sql_cmnd = new SqlCommand(_updateProcName, _sqlCon);
-
-                        if (response.IsSuccessful)
-                        {
-                            var jObject = JObject.Parse(response.Content);
-                            string status = jObject["etran_loan"]["status"].ToString();
-                            string slug = jObject["slug"].ToString();
-                            string error = " ";
-                            updateForgivenessDb(sql_cmnd, sbaNumber, status, error, slug);
-                            Utility.Utility.LogAction("Invoke SBA Loan Requert Procedure executed successfully");
-                            sbaPPPLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgiveness>(response.Content);
-                        }
-                        else
-                        {
-                            string status = "Failed";
-                            string slug = " ";
-                            updateForgivenessDb(sql_cmnd, sbaNumber, status, response.Content, slug);
-                            Utility.Utility.LogAction($"Did not receive success code for SBA Number:{sbaNumber}. please investigate. \nresponse code: {response.StatusCode}.\n response:{response.Content}");
-                            return new SbaPPPLoanForgiveness();
-                        }
-
-                    }
-
-                    catch (Exception ex)
-                    {
-                        Utility.Utility.LogAction("invokeSbaLoanForgiveness() failed with error " + ex.Message);
-                    }
-
-                    finally
-                    {
-                        _sqlCon.Close();
-                    }
-
-                    return sbaPPPLoanForgiveness;
+                    var jObject = JObject.Parse(response.Content);
+                    string status = jObject["etran_loan"]["status"].ToString();
+                    string slug = jObject["slug"].ToString();
+                    string error = " ";
+                    UpdateForgivenessDb(sql_cmnd, sbaNumber, status, error, slug);
+                    Utility.Utility.LogAction($"{sbaNumber}: Invoke SBA Loan Requert Procedure executed successfully");
+                    sbaPPPLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgiveness>(response.Content);
+                }
+                else
+                {
+                    string status = "Failed";
+                    string slug = " ";
+                    UpdateForgivenessDb(sql_cmnd, sbaNumber, status, Convert.ToString(response.Content), slug);
+                    Utility.Utility.LogAction($"{sbaNumber}: Did not receive success code for SBA Number. please investigate. \nresponse code: {response.StatusCode}.\n response:{response.Content}");
+                    return new SbaPPPLoanForgiveness();
                 }
 
-            }
-            catch (Exception exception)
-            {
-                Utility.Utility.LogAction($"invokeSbaLoanForgiveness() failed with error : {exception.Message}");
-                return null;
+                _sqlCon.Close();
+                return sbaPPPLoanForgiveness;
             }
         }
 
-        public static void updateForgivenessDb(SqlCommand sql_cmnd, double sbaNumber, string status, string error, string slug)
+        public static void UpdateForgivenessDb(SqlCommand sql_cmnd, double sbaNumber, string status, string error, string slug)
         {
             sql_cmnd.Parameters.AddWithValue("@status", status);
             sql_cmnd.Parameters.AddWithValue("@error", error);
-            sql_cmnd.Parameters.AddWithValue("@sbaLoanNumber", sbaNumber);
+            sql_cmnd.Parameters.AddWithValue("@sbaLoanNumber", Convert.ToString(sbaNumber));
             sql_cmnd.Parameters.AddWithValue("@slug", slug);
             sql_cmnd.CommandType = CommandType.StoredProcedure;
             Utility.Utility.LogAction($"Update Stored Procedure Successfully Worked for Sba Number : {sbaNumber} ");
             int r = sql_cmnd.ExecuteNonQuery();
         }
 
-        public async Task<LoanDocumentResponse> uploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, string document, string loanDocumentsUrl, string sbaNumber)
+        public static void ForgivenessDocument(SqlCommand sql_cmnd, string sbaNumber, string Slug, string Name, string CreatedAt, string UpdatedAt, string Document, int DocumentType, string Url, string EtranLoan)
         {
-            string _updateProcName = ConfigurationManager.AppSettings["TestDataSPStatus"];
-            string connectionString = ConfigurationManager.ConnectionStrings["condata"].ConnectionString;
-            double sbanumber = Convert.ToDouble(sbaNumber);
-            try
-            {
-                RestClient restClient = new RestClient($"{baseUri}/{loanDocumentsUrl}/");
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.POST);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddParameter("name", requestName);
-                restRequest.AddParameter("document_type", requestDocument_type);
-                restRequest.AddParameter("etran_loan", etran_loan);
-                restRequest.AddFile("document", document);
+            sql_cmnd.Parameters.AddWithValue("@SBANumber", sbaNumber);
+            sql_cmnd.Parameters.AddWithValue("@Slug", Slug);
+            sql_cmnd.Parameters.AddWithValue("@Name", Name);
+            sql_cmnd.Parameters.AddWithValue("@CreatedAt", CreatedAt);
+            sql_cmnd.Parameters.AddWithValue("@UpdatedAt", UpdatedAt);
+            sql_cmnd.Parameters.AddWithValue("@Document", Document);
+            sql_cmnd.Parameters.AddWithValue("@DocumentType", DocumentType);
+            sql_cmnd.Parameters.AddWithValue("@Url", Url);
+            sql_cmnd.Parameters.AddWithValue("@EtranLoan", EtranLoan);
 
-                IRestResponse response = await restClient.ExecuteAsync(restRequest);
-                using (SqlConnection _sqlCon = new SqlConnection(connectionString))
-                {
-                    LoanDocumentResponse loanDocument = null;
-                    try
-                    {
-                        _sqlCon.Open();
-                        SqlCommand sql_cmnd = new SqlCommand(_updateProcName, _sqlCon);
-
-                        if (response.IsSuccessful)
-                        {
-                            //var jObject = JObject.Parse(response.Content);
-                            //string status = jObject["etran_loan"]["status"].ToString();
-                            //string slug = etran_loan;//jObject["slug"].ToString();
-                            //string error = " ";
-                            //updateForgivenessDb(sql_cmnd, sbanumber, status, error, slug); need to do
-                            Utility.Utility.LogAction("Upload loan document Procedure executed successfully");
-                            loanDocument = JsonConvert.DeserializeObject<LoanDocumentResponse>(response.Content);
-
-                        }
-                        else
-                        {
-                            //string status = "Upload Loan Document Failed";
-                            //string slug = " ";
-                            //updateForgivenessDb(sql_cmnd, sbanumber, status, response.Content, slug);
-                            Utility.Utility.LogAction($"Did not receive success code uploadForgivenessDocument() {loanDocumentsUrl}. please investigate. \nresponse code: {response.StatusCode}.\n response:{response.Content}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Utility.Utility.LogAction(" uploadForgivenessDocument sql connection failed with error " + ex.Message);
-                    }
-                    finally
-                    {
-                        _sqlCon.Close();
-                    }
-                    return loanDocument;
-                }
-            }
-            catch (Exception exception)
-            {
-                Utility.Utility.LogAction($"{Environment.NewLine}{exception.Message}{Environment.NewLine}");
-                return null;
-            }
+            sql_cmnd.CommandType = CommandType.StoredProcedure;
+            Utility.Utility.LogAction($"Update Stored Procedure Successfully Worked for Sba Number : {sbaNumber} ");
+            int r = sql_cmnd.ExecuteNonQuery();
         }
 
-        public async Task<LoanDocument> invokeSbaLoanDocument(LoanDocument request, string loanDocumentsUrl)
+        public async Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl, string sbaNumber)
         {
-            try
-            {
-                var serialized = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
+            string _updateProcName = ConfigurationManager.AppSettings["TestDataSPStatus"];
+            string docProcName = ConfigurationManager.AppSettings["ForgivenessDocument"];
+            string connectionString = ConfigurationManager.ConnectionStrings["condata"].ConnectionString;
+            double sbanumber = Convert.ToDouble(sbaNumber);
 
-                RestClient restClient = new RestClient($"{baseUri}/{loanDocumentsUrl}/");
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.POST);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddHeader("Content-Type", "application/json");
-                restRequest.AddParameter("application/json", serialized, ParameterType.RequestBody);
-                IRestResponse response = await restClient.ExecuteAsync(restRequest);
+            RestClient restClient = new RestClient($"{baseUri}/{loanDocumentsUrl}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.POST);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddParameter("name", requestName);
+            restRequest.AddParameter("document_type", requestDocument_type);
+            restRequest.AddParameter("etran_loan", etran_loan);
+            restRequest.AddFile("document", document, requestName);
+            //restRequest.AddFile("document", document);
+
+            IRestResponse response = await restClient.ExecuteAsync(restRequest);
+            using (SqlConnection _sqlCon = new SqlConnection(connectionString))
+            {
+                LoanDocumentResponse loanDocument = null;
+
+                _sqlCon.Open();
 
 
                 if (response.IsSuccessful)
                 {
-                    LoanDocument loanDocument = JsonConvert.DeserializeObject<LoanDocument>(response.Content);
-                    return loanDocument;
+                    SqlCommand sql_cmnd = new SqlCommand(docProcName, _sqlCon);
+                    var jObject = JObject.Parse(response.Content);
+                    string slug = jObject["slug"]?.ToString();
+                    string name = jObject["name"]?.ToString();
+                    string createdAt = jObject["created_at"]?.ToString();
+                    string updatedAt = jObject["updated_at"]?.ToString();
+                    string doc = jObject["document"]?.ToString();
+                    int documentType = Convert.ToInt32(jObject["document_type"]?.ToString());
+                    string url = jObject["url"]?.ToString();
+                    string etranLoan = jObject["etran_loan"]?.ToString();
+
+                    ForgivenessDocument(sql_cmnd, sbaNumber, slug, name, createdAt, updatedAt, doc, documentType, url, etranLoan);
+                    Utility.Utility.LogAction("Upload loan document Procedure executed successfully");
+                    loanDocument = JsonConvert.DeserializeObject<LoanDocumentResponse>(response.Content);
+
                 }
                 else
                 {
-                    Utility.Utility.LogAction($"Did not receive success code. please investigate. \nresponse code: {response.StatusCode}.\n response:{response.Content}");
-                    return new LoanDocument();
+                    SqlCommand sql_cmnd = new SqlCommand(_updateProcName, _sqlCon);
+                    string status = "Upload Loan Document Failed";
+                    string slug = " ";
+                    UpdateForgivenessDb(sql_cmnd, sbanumber, status, response.Content, slug);
+
+                    Utility.Utility.LogAction($"{sbanumber} : Did not receive success code uploadForgivenessDocument() {loanDocumentsUrl}. please investigate. \nresponse code: {response.StatusCode}.\n response:{response.Content}");
                 }
 
+                _sqlCon.Close();
+
+                return loanDocument;
             }
-            catch (Exception exception)
-            {
-                Utility.Utility.LogAction($"{Environment.NewLine}{exception.Message}{Environment.NewLine}");
-                return null;
-            }
+
         }
+
+        public async Task<LoanDocument> invokeSbaLoanDocument(LoanDocument request, string loanDocumentsUrl)
+        {
+
+
+            var serialized = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
+
+            RestClient restClient = new RestClient($"{baseUri}/{loanDocumentsUrl}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.POST);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            restRequest.AddParameter("application/json", serialized, ParameterType.RequestBody);
+            IRestResponse response = await restClient.ExecuteAsync(restRequest);
+
+
+            if (response.IsSuccessful)
+            {
+                LoanDocument loanDocument = JsonConvert.DeserializeObject<LoanDocument>(response.Content);
+                return loanDocument;
+            }
+            else
+            {
+                Utility.Utility.LogAction($"Did not receive success code. please investigate. \nresponse code: {response.StatusCode}.\n response:{response.Content}");
+                return new LoanDocument();
+            }
+
+        }
+
+
 
         public async Task<SbaPPPLoanDocumentTypeResponse> getSbaLoanForgiveness(int pageNumber, string sbaNumber, string loanForgivenessUrl)
         {
-            try
+            if (pageNumber <= 0)
             {
-                if (pageNumber <= 0)
-                {
-                    throw new Exception("Incorrect input data. please investigate");
-                }
-
-                string baseUrl = !string.IsNullOrEmpty(sbaNumber)
-                    ? $"{baseUri}/{loanForgivenessUrl}?pageNumber={pageNumber}&sbaNumber={sbaNumber}"
-                    : $"{baseUri}/{loanForgivenessUrl}?pageNumber={pageNumber}";
-
-                RestClient restClient = new RestClient(baseUrl);
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.GET);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddHeader("Content-Type", "application/json");
-                IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
-
-                if (restResponse.IsSuccessful)
-                {
-                    SbaPPPLoanDocumentTypeResponse loanDocumentTypeResponse = JsonConvert.DeserializeObject<SbaPPPLoanDocumentTypeResponse>(restResponse.Content);
-                    return loanDocumentTypeResponse;
-                }
-                else
-                {
-                    Utility.Utility.LogAction($"Did not receive success code for Sba Number : {sbaNumber}. please investigate. received response code: {restResponse.StatusCode}");
-                    return new SbaPPPLoanDocumentTypeResponse();
-                }
+                throw new Exception("Incorrect input data. please investigate");
             }
-            catch (Exception exception)
+
+            string baseUrl = !string.IsNullOrEmpty(sbaNumber)
+                ? $"{baseUri}/{loanForgivenessUrl}?pageNumber={pageNumber}&sbaNumber={sbaNumber}"
+                : $"{baseUri}/{loanForgivenessUrl}?pageNumber={pageNumber}";
+
+            RestClient restClient = new RestClient(baseUrl);
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.GET);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+
+            if (restResponse.IsSuccessful)
             {
-                Utility.Utility.LogAction($"{Environment.NewLine}{exception.Message}{Environment.NewLine}");
-                return null;
+                SbaPPPLoanDocumentTypeResponse loanDocumentTypeResponse = JsonConvert.DeserializeObject<SbaPPPLoanDocumentTypeResponse>(restResponse.Content);
+                return loanDocumentTypeResponse;
             }
+            else
+            {
+                Utility.Utility.LogAction($"{sbaNumber} : Did not receive success code for Sba Number. please investigate. received response code: {restResponse.StatusCode}");
+                return new SbaPPPLoanDocumentTypeResponse();
+            }
+
+
         }
 
         public async Task<SbaPPPLoanForgivenessStatusResponse> getAllForgivenessRequests(string ppp_loan_forgiveness_requests)
         {
-            try
+
+            RestClient restClient = new RestClient($"{baseUri}/{ppp_loan_forgiveness_requests}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.GET);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+
+            if (restResponse.IsSuccessful)
             {
-                RestClient restClient = new RestClient($"{baseUri}/{ppp_loan_forgiveness_requests}/");
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.GET);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddHeader("Content-Type", "application/json");
-                IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
-
-                if (restResponse.IsSuccessful)
-                {
-                    SbaPPPLoanForgivenessStatusResponse sbaLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgivenessStatusResponse>(restResponse.Content);
-                    return sbaLoanForgiveness;
-                }
-                else
-                {
-                    Utility.Utility.LogAction($"Did not receive success code. please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
-                    return new SbaPPPLoanForgivenessStatusResponse();
-                }
-
+                SbaPPPLoanForgivenessStatusResponse sbaLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgivenessStatusResponse>(restResponse.Content);
+                return sbaLoanForgiveness;
             }
-            catch (Exception exception)
+            else
             {
-                Utility.Utility.LogAction($"{Environment.NewLine}{exception.Message}{Environment.NewLine}");
-
-                return null;
+                Utility.Utility.LogAction($"Did not receive success code. please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
+                return new SbaPPPLoanForgivenessStatusResponse();
             }
+
+
         }
 
 
         public async Task<SbaPPPLoanForgiveness> getSbaLoanForgivenessBySlug(string slug, string loanForgivenessUrl)
         {
-            try
+            if (string.IsNullOrEmpty(slug))
             {
-                if (string.IsNullOrEmpty(slug))
-                {
-                    throw new Exception("Incorrect input data. please investigate");
-                }
-
-                RestClient restClient = new RestClient($"{baseUri}/{loanForgivenessUrl}/{slug}/");
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.GET);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddHeader("Content-Type", "application/json");
-                IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
-
-                if (restResponse.IsSuccessful)
-                {
-                    Console.WriteLine($"{Environment.NewLine}{restResponse.Content}{Environment.NewLine}");
-                    Console.WriteLine("------------------------------------------------------------------------");
-
-                    SbaPPPLoanForgiveness sbaLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgiveness>(restResponse.Content);
-                    return sbaLoanForgiveness;
-                }
-                throw new Exception($"Did not receive success code. please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
+                Utility.Utility.LogAction("Incorrect input data in getSbaLoanForgivenessBySlug. please investigate");
             }
-            catch (Exception exception)
+
+            RestClient restClient = new RestClient($"{baseUri}/{loanForgivenessUrl}/{slug}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.GET);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+
+            if (restResponse.IsSuccessful)
             {
-                Console.WriteLine($"{Environment.NewLine}{exception.Message}{Environment.NewLine}");
-                Console.WriteLine("------------------------------------------------------------------------");
-                return null;
+                Utility.Utility.LogAction($"{Environment.NewLine}{restResponse.Content}{Environment.NewLine}");
+                SbaPPPLoanForgiveness sbaLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgiveness>(restResponse.Content);
+                return sbaLoanForgiveness;
+            }
+            else
+            {
+                Utility.Utility.LogAction($"Did not receive success code. please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
+                return new SbaPPPLoanForgiveness();
             }
         }
 
-        public async Task<SbaPPPLoanForgivenessStatusResponse> getForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
+        public async Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
         {
-            try
+            RestClient restClient = new RestClient($"{baseUri}/{ppp_loan_forgiveness_requests}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.GET);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            restRequest.AddParameter("sba_number", sbaNumber);
+            IRestResponse restResponse = restClient.Execute(restRequest);
+
+            if (restResponse.IsSuccessful)
             {
-                RestClient restClient = new RestClient($"{baseUri}/{ppp_loan_forgiveness_requests}/");
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.GET);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddHeader("Content-Type", "application/json");
-                restRequest.AddParameter("sba_number", sbaNumber);
-                IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+                var jObject = JObject.Parse(restResponse.Content);
+                string status = Convert.ToInt32(((Newtonsoft.Json.Linq.JValue)jObject["count"]).Value) <= 0 ? "" : jObject["results"][0]["etran_loan"]["status"].ToString();
 
-                if (restResponse.IsSuccessful)
-                {
-                    var jObject = JObject.Parse(restResponse.Content);
-                    string status = Convert.ToInt32(((Newtonsoft.Json.Linq.JValue)jObject["count"]).Value) <= 0 ? "Removed" : jObject["results"][0]["etran_loan"]["status"].ToString();
-
-                    SbaPPPLoanForgivenessStatusResponse sbaLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgivenessStatusResponse>(restResponse.Content);
-                    sbaLoanForgiveness.Status = status;
-                    return sbaLoanForgiveness;
-
-                }
-                else
-                {
-                    Utility.Utility.LogAction($"Did not receive success code for the Sba Number: {sbaNumber} in getForgivenessRequestBysbaNumber(). please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
-                    return new SbaPPPLoanForgivenessStatusResponse();
-                }
+                SbaPPPLoanForgivenessStatusResponse sbaLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgivenessStatusResponse>(restResponse.Content);
+                sbaLoanForgiveness.Status = status;
+                return sbaLoanForgiveness;
 
             }
-            catch (Exception exception)
+            else
             {
-                Utility.Utility.LogAction($"{Environment.NewLine}{exception.Message}{Environment.NewLine}");
-                throw exception;
+                Utility.Utility.LogAction($"{sbaNumber} : Did not receive success code for the Sba Number: {sbaNumber} in getForgivenessRequestBysbaNumber(). please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
+                return new SbaPPPLoanForgivenessStatusResponse();
             }
+
         }
 
-        public async Task<SbaPPPLoanDocumentTypeResponse> getSbaLoanForgiveness(string loanForgivenessUrl)
+        public async Task<SbaPPPLoanDocumentTypeResponse> GetSbaLoanForgiveness(string loanForgivenessUrl)
         {
             try
             {
@@ -388,110 +350,133 @@ namespace Claysys.PPP.Forgiveness.restclient
 
         public async Task<SbaPPPLoanMessagesResponse> getForgivenessMessagesBySbaNumber(int page, string sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
         {
-            try
+
+
+            string _messageProcName = ConfigurationManager.AppSettings["ForgivenessMessage"];
+            string _updateProcName = ConfigurationManager.AppSettings["TestDataSPStatus"];
+            string connectionString = ConfigurationManager.ConnectionStrings["condata"].ConnectionString;
+
+            if (page <= 0)
             {
-                if (page <= 0)
-                {
-                    throw new Exception("Incorrect input data. please investigate");
-                }
+                Utility.Utility.LogAction(("Incorrect input data. please investigate"));
+            }
 
-                string baseUrl = $"{baseUri}/{loanForgivenessMessageUrl}/";
+            string baseUrl = $"{baseUri}/{loanForgivenessMessageUrl}/";
 
-                RestClient restClient = new RestClient(baseUrl);
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.GET);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddParameter("sba_number", sbaNumber);
-                restRequest.AddParameter("page", page);
-                restRequest.AddParameter("isComplete", isComplete);
-                restRequest.AddHeader("Content-Type", "application/json");
-                IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+            RestClient restClient = new RestClient(baseUrl);
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.GET);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddParameter("sba_number", sbaNumber);
+            restRequest.AddParameter("page", page);
+            restRequest.AddParameter("isComplete", isComplete);
+            restRequest.AddHeader("Content-Type", "application/json");
+            IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+
+            using (SqlConnection _sqlCon = new SqlConnection(connectionString))
+            {
+                SbaPPPLoanMessagesResponse loanMessagesResponse = null;
+
+                _sqlCon.Open();
+                // SqlCommand sql_cmnd = new SqlCommand(_messageProcName, _sqlCon);
 
                 if (restResponse.IsSuccessful)
                 {
+                    SqlCommand sql_cmnd = new SqlCommand(_messageProcName, _sqlCon);
+                    var jObject = JObject.Parse(restResponse.Content);
+                    string subject = jObject["slug"]?.ToString();
+                    string ticket = jObject["name"]?.ToString();
+                    string message = jObject["created_at"]?.ToString();
+                    Boolean isCompleted = Convert.ToBoolean(jObject["updated_at"]);
 
-                    SbaPPPLoanMessagesResponse loanMessagesResponse = JsonConvert.DeserializeObject<SbaPPPLoanMessagesResponse>(restResponse.Content);
-                    return loanMessagesResponse;
+                    ForgivenessMessage(sql_cmnd, sbaNumber, subject, ticket, message, isCompleted);
+                    Utility.Utility.LogAction("Forgiveness Message Procedure executed successfully");
+
+                    loanMessagesResponse = JsonConvert.DeserializeObject<SbaPPPLoanMessagesResponse>(restResponse.Content);
+
                 }
-                throw new Exception($"Did not receive success code. please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
-            }
-            catch (Exception exception)
-            {
-                Utility.Utility.LogAction($"{Environment.NewLine}{exception.Message}{Environment.NewLine}");
+                else
+                {
+                    SqlCommand sql_cmnd = new SqlCommand(_updateProcName, _sqlCon);
+                    string status = "Upload Loan Document Failed";
+                    string slug = " ";
+                    UpdateForgivenessDb(sql_cmnd, Convert.ToDouble(sbaNumber), status, restResponse.Content, slug);
 
-                return null;
+                    Utility.Utility.LogAction($"{sbaNumber}Did not receive success code for getForgivenessMessagesBySbaNumber function. please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
+                    return new SbaPPPLoanMessagesResponse();
+                }
+
+                _sqlCon.Close();
+                return loanMessagesResponse;
             }
+
         }
 
-        public async Task<bool> deleteSbaLoanForgiveness(string slug, string sbaNumber, string loanForgivenessUrl)
+        public static void ForgivenessMessage(SqlCommand sql_cmnd, string sbaNumber, string subject, string ticket, string message, bool isCompleted)
+        {
+            sql_cmnd.Parameters.AddWithValue("@SBANumber", Convert.ToInt32(sbaNumber));
+            sql_cmnd.Parameters.AddWithValue("@Subject", subject);
+            sql_cmnd.Parameters.AddWithValue("@Ticket", ticket);
+            sql_cmnd.Parameters.AddWithValue("@Messages", message);
+            sql_cmnd.Parameters.AddWithValue("@IsComplete", isCompleted);
+
+            sql_cmnd.CommandType = CommandType.StoredProcedure;
+            Utility.Utility.LogAction($"Update Stored Procedure Successfully Worked for Sba Number : {sbaNumber} ");
+            int r = sql_cmnd.ExecuteNonQuery();
+        }
+
+        public async Task<bool> DeleteSbaLoanForgiveness(string slug, string sbaNumber, string loanForgivenessUrl)
         {
             string _deleteProcName = ConfigurationManager.AppSettings["TestDataSPStatus"];
             string connectionString = ConfigurationManager.ConnectionStrings["condata"].ConnectionString;
             double sbanumber = Convert.ToDouble(sbaNumber);
-            try
+
+            if (string.IsNullOrEmpty(slug))
             {
-                if (string.IsNullOrEmpty(slug))
-                {
-                    Utility.Utility.LogAction("Incorrect input data. please investigate");
-                }
-
-                RestClient restClient = new RestClient($"{baseUri}/{loanForgivenessUrl}/{slug}/");
-                restClient.Timeout = -1;
-                RestRequest restRequest = new RestRequest(Method.DELETE);
-                restRequest.AddHeader("Authorization", apiToken);
-                restRequest.AddHeader(VENDOR_KEY, vendorKey);
-                restRequest.AddHeader("Content-Type", "application/json");
-                IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
-
-                using (SqlConnection _sqlCon = new SqlConnection(connectionString))
-                {
-                    SbaPPPLoanForgiveness sbaPPPLoanForgiveness = null;
-                    try
-                    {
-                        _sqlCon.Open();
-                        SqlCommand sql_cmnd = new SqlCommand(_deleteProcName, _sqlCon);
-
-                        if (restResponse.IsSuccessful)
-                        {
-                            var jObject = JObject.Parse(restResponse.Content);
-                            string status = jObject["etran_loan"]["status"].ToString();
-                            string error = restResponse.Content;
-                            updateForgivenessDb(sql_cmnd, sbanumber, status, error, slug);
-
-                            sbaPPPLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgiveness>(restResponse.Content);
-                            Utility.Utility.LogAction($"{Environment.NewLine}Delete was successful{Environment.NewLine}");
-
-                        }
-                        else
-                        {
-                            var jObject = JObject.Parse(restResponse.Content);
-                            string status = "Deletion Failed";
-                            string error = restResponse.Content;
-                            updateForgivenessDb(sql_cmnd, sbanumber, status, error, slug);
-                            Utility.Utility.LogAction($"Did not receive success code for SBA Number: {sbaNumber} Deletion. please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
-                            return false;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Utility.Utility.LogAction("Database connectivity in Delete SBA Loan Request failed with error " + ex.Message);
-                    }
-
-                    finally
-                    {
-                        _sqlCon.Close();
-
-                    }
-                    return true;
-                }
+                Utility.Utility.LogAction("Incorrect input data. please investigate");
             }
 
-            catch (Exception exception)
+            RestClient restClient = new RestClient($"{baseUri}/{loanForgivenessUrl}/{slug}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.DELETE);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+
+            using (SqlConnection _sqlCon = new SqlConnection(connectionString))
             {
-                Utility.Utility.LogAction($"{Environment.NewLine}{exception.Message}{Environment.NewLine}");
-                return false;
+                SbaPPPLoanForgiveness sbaPPPLoanForgiveness = null;
+
+                _sqlCon.Open();
+                SqlCommand sql_cmnd = new SqlCommand(_deleteProcName, _sqlCon);
+
+                if (restResponse.IsSuccessful)
+                {
+                    var jObject = JObject.Parse(restResponse.Content);
+                    string status = jObject["etran_loan"]["status"].ToString();
+                    string error = restResponse.Content;
+                    UpdateForgivenessDb(sql_cmnd, sbanumber, status, error, slug);
+
+                    sbaPPPLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgiveness>(restResponse.Content);
+                    Utility.Utility.LogAction($"{Environment.NewLine}Delete was successful{Environment.NewLine}");
+
+                }
+                else
+                {
+                    var jObject = JObject.Parse(restResponse.Content);
+                    string status = "Deletion Failed";
+                    string error = restResponse.Content;
+                    UpdateForgivenessDb(sql_cmnd, sbanumber, status, error, slug);
+                    Utility.Utility.LogAction($"Did not receive success code for SBA Number: {sbaNumber} Deletion. please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
+                    return false;
+                }
+
+                _sqlCon.Close();
+                return true;
             }
+
         }
 
 

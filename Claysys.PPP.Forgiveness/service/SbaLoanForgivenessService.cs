@@ -15,10 +15,10 @@ namespace Claysys.PPP.Forgiveness.service
             this.sbaRestApiClient = sbaRestApiClient;
         }
 
-        public Task<SbaPPPLoanForgiveness> execute(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
+        public Task<SbaPPPLoanForgiveness> Execute(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
         {
-            Utility.Utility.LogAction("Processing Sba Loan Forgiveness request");
-            return sbaRestApiClient.invokeSbaLoanForgiveness(request, loanForgivenessUrl);
+            Utility.Utility.LogAction($"{request.etran_loan.sba_number} : Processing Sba Loan Forgiveness request in SBALoanForgivenessService");
+            return sbaRestApiClient.InvokeSbaLoanForgiveness(request, loanForgivenessUrl);
         }
 
         public Task<SbaPPPLoanDocumentTypeResponse> getLoanStatus(int page, string sbaNumber, string loanForgivenessUrl)
@@ -39,28 +39,28 @@ namespace Claysys.PPP.Forgiveness.service
             return sbaRestApiClient.getSbaLoanForgivenessBySlug(slug, loanForgivenessUrl);
         }
 
-        public Task<SbaPPPLoanForgivenessStatusResponse> getForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
+        public Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
         {
-            Utility.Utility.LogAction("Retreiving Sba Loan Forgiveness request using sbaNumber");
-            return sbaRestApiClient.getForgivenessRequestBysbaNumber(sbaNumber, ppp_loan_forgiveness_requests);
+            Utility.Utility.LogAction($"{sbaNumber} : Retreiving Sba Loan Forgiveness request using sbaNumber in SbaLoannForgivenessService.");
+            return sbaRestApiClient.GetForgivenessRequestBysbaNumber(sbaNumber, ppp_loan_forgiveness_requests);
         }
 
-        public Task<SbaPPPLoanDocumentTypeResponse> getDocumenttypes(string loanForgivenessUrl)
+        public Task<SbaPPPLoanDocumentTypeResponse> GetDocumenttypes(string loanForgivenessUrl)
         {
-            Utility.Utility.LogAction("Retreiving document types");
-            return sbaRestApiClient.getSbaLoanForgiveness(loanForgivenessUrl);
+            Utility.Utility.LogAction("Retreiving document types in SbaLoanForgivenessService.");
+            return sbaRestApiClient.GetSbaLoanForgiveness(loanForgivenessUrl);
         }
 
-        public async Task<bool> deleteSbaLoanForgiveness(string slug,string sbaNumber, string loanForgivenessUrl)
+        public async Task<bool> DeleteSbaLoanForgiveness(string slug,string sbaNumber, string loanForgivenessUrl)
         {
-            Utility.Utility.LogAction("Deleting Sba Loan Forgiveness request");
-            return await sbaRestApiClient.deleteSbaLoanForgiveness(slug,sbaNumber, loanForgivenessUrl);
+            Utility.Utility.LogAction($"{sbaNumber} : Deleting Sba Loan Forgiveness request in SbaLoanForgivenessService.");
+            return await sbaRestApiClient.DeleteSbaLoanForgiveness(slug,sbaNumber, loanForgivenessUrl);
         }
 
-        public Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, string document, string loanDocumentsUrl,string sbaNumber)
+        public Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl,string sbaNumber)
         {
             Utility.Utility.LogAction("Retreiving Sba Loan Forgiveness request");
-            return sbaRestApiClient.uploadForgivenessDocument( requestName,  requestDocument_type,  etran_loan,  document,  loanDocumentsUrl,sbaNumber);
+            return sbaRestApiClient.UploadForgivenessDocument( requestName,  requestDocument_type,  etran_loan,  document,  loanDocumentsUrl,sbaNumber);
         }
     }
 }

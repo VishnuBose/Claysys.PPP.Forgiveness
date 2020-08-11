@@ -34,10 +34,10 @@ namespace Claysys.PPP.Forgiveness.service
             return sbaRestApiClient.getSbaLoanDocumentTypeById(id, loanDocumentTypesUrl);
         }
 
-        public Task<LoanDocumentResponse> uploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, string document, string loanDocumentsUrl,string sbaNumber)
+        public Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl,string sbaNumber)
         {
-            Utility.Utility.LogAction("Processing Loan Document Submission.");
-            return sbaRestApiClient.uploadForgivenessDocument(requestName, requestDocument_type, etran_loan, document, loanDocumentsUrl, sbaNumber);
+            Utility.Utility.LogAction($"{sbaNumber} : Processing Loan Document Submission in SbaLoanDocumentService.");
+            return sbaRestApiClient.UploadForgivenessDocument(requestName, requestDocument_type, etran_loan, document, loanDocumentsUrl, sbaNumber);
         }
     }
 }

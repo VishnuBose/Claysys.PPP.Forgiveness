@@ -14,10 +14,10 @@ namespace Claysys.PPP.Forgiveness.controller
             this.sbaLoanForgivenessService = sbaLoanForgivenessService;
         }
 
-        public Task<SbaPPPLoanForgiveness> execute(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
+        public Task<SbaPPPLoanForgiveness> Execute(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
         {
-            Utility.Utility.LogAction($"Submit Request Received: {request}");
-            Task<SbaPPPLoanForgiveness> response = sbaLoanForgivenessService.execute(request, loanForgivenessUrl);
+            Utility.Utility.LogAction($"Submit Request Received in SBALoanForgivenessController : {request.etran_loan.sba_number}");
+            Task<SbaPPPLoanForgiveness> response = sbaLoanForgivenessService.Execute(request, loanForgivenessUrl);
             return response;
         }
 
@@ -42,24 +42,24 @@ namespace Claysys.PPP.Forgiveness.controller
             return response;
         }
 
-        public Task<SbaPPPLoanForgivenessStatusResponse> getForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
+        public Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
         {
-            Utility.Utility.LogAction("Get Request Received.");
-            Task<SbaPPPLoanForgivenessStatusResponse> response = sbaLoanForgivenessService.getForgivenessRequestBysbaNumber(sbaNumber, ppp_loan_forgiveness_requests);
+            Utility.Utility.LogAction($"{sbaNumber} :Get Request Received in SbaLoanForgivenessController.");
+            Task<SbaPPPLoanForgivenessStatusResponse> response = sbaLoanForgivenessService.GetForgivenessRequestBysbaNumber(sbaNumber, ppp_loan_forgiveness_requests);
             return response;
         }
 
-        public Task<SbaPPPLoanDocumentTypeResponse> getDocumenttypes(string loanForgivenessUrl)
+        public Task<SbaPPPLoanDocumentTypeResponse> GetDocumenttypes(string loanForgivenessUrl)
         {
-            Utility.Utility.LogAction("Get Request Received.");
-            Task<SbaPPPLoanDocumentTypeResponse> response = sbaLoanForgivenessService.getDocumenttypes(loanForgivenessUrl);
+            Utility.Utility.LogAction("Get Request Received in SbaLoanForgivenessController.");
+            Task<SbaPPPLoanDocumentTypeResponse> response = sbaLoanForgivenessService.GetDocumenttypes(loanForgivenessUrl);
             return response;
         }
 
-        public async Task<bool> deleteSbaLoanForgiveness(string slug,string sbaNumber, string loanForgivenessUrl)
+        public async Task<bool> DeleteSbaLoanForgiveness(string slug,string sbaNumber, string loanForgivenessUrl)
         {
-            Utility.Utility.LogAction("Delete Request Received.");
-            return await sbaLoanForgivenessService.deleteSbaLoanForgiveness(slug,sbaNumber, loanForgivenessUrl);
+            Utility.Utility.LogAction($"{sbaNumber} : Delete Request Received in SbaLoanForgivenessController.");
+            return await sbaLoanForgivenessService.DeleteSbaLoanForgiveness(slug,sbaNumber, loanForgivenessUrl);
         }
 
 

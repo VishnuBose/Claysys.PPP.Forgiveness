@@ -12,7 +12,7 @@ namespace Claysys.PPP.Forgiveness.controller
         public string DocumentName;
         public string documentType;
         public string etranId;
-        public string rawDocument;
+        public byte[] rawDocument;
 
 
 
@@ -45,10 +45,10 @@ namespace Claysys.PPP.Forgiveness.controller
             return document;
         }
 
-        public Task<LoanDocumentResponse> uploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, string document, string loanDocumentsUrl, string sbaNumber)
+        public Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl, string sbaNumber)
         {
-            Utility.Utility.LogAction("Submit Loan Document.");
-            Task<LoanDocumentResponse> loanDocument = sbaLoanDocumentService.uploadForgivenessDocument(requestName, requestDocument_type, etran_loan, document, loanDocumentsUrl, sbaNumber);
+            Utility.Utility.LogAction($"{sbaNumber} : Loan Document in SbaLoanDocumentsController.");
+            Task<LoanDocumentResponse> loanDocument = sbaLoanDocumentService.UploadForgivenessDocument(requestName, requestDocument_type, etran_loan, document, loanDocumentsUrl, sbaNumber);
             return loanDocument;
         }
     }

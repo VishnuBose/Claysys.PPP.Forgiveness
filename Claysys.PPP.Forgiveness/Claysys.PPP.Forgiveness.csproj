@@ -84,6 +84,7 @@
       <DependentUpon>ForgivenessService.cs</DependentUpon>
     </Compile>
     <Compile Include="Methods\Methods.cs" />
+    <Compile Include="Model\ForgivenessData.cs" />
     <Compile Include="Model\SbaForgiveness.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProjectInstaller.cs">
