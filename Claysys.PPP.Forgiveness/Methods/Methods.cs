@@ -71,24 +71,6 @@ namespace Claysys.PPP.Forgiveness.Methods
 
         public static async Task<SbaPPPLoanForgiveness> InvokeSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, SbaForgiveness sbaForgivenessobj)
         {
-            //Race race = new Race
-            //{
-            //    race = "1"
-            //};
-
-            //Demographics demographics = new Demographics
-            //{
-            //    name = "abc",
-            //    position = "xyz",
-            //    veteran_status = "1",
-            //    gender = "M",
-            //    ethnicity = "H",
-            //    races = new List<Race>(1)
-            //    {
-            //        race
-            //    }
-            //};
-
             SbaPPPLoanForgiveness pppLoanForgiveness;
 
             if (sbaForgivenessobj.ez_form)

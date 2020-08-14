@@ -176,4 +176,14 @@ namespace Claysys.PPP.Forgiveness.Model
         public string CustomerSafteyFileName;
         public byte[] CustomerSafteyFile;
     }
+
+
+    public class ForgiveAdditionalDocuments
+    {
+        public string fileName;
+
+        public byte[] fileContent;
+
+        public string DocumentType;
+    }
 }
