@@ -143,4 +143,37 @@ namespace Claysys.PPP.Forgiveness.Model
 
 
     }
+
+
+    public class ForgivenessDocumentsFullApp
+    {
+        public string PayrollCompensationName;
+        public byte[] PayrollCompensationFile;
+        public string PayrollTaxFormName;
+        public byte[] PayrollTaxFormFile;
+        public string PayrollPayementsName;
+        public byte[] PayrollPayementsFile;
+        public string FTEDocumentationName1;
+        public byte[] FTEDocumentFile1;
+        public string FTEDocumentationName2;
+        public byte[] FTEDocumentFile2;
+        public string FTEDocumentationName3;
+        public byte[] FTEDocumentFile3;
+        public string NonpayrollName1;
+        public byte[] NonpayrollFile1;
+        public string NonpayrollName2;
+        public byte[] NonpayrollFile2;
+        public string NonpayrollName3;
+        public byte[] NonpayrollFile3;
+        public string AdditionalDocumentName1;
+        public byte[] AdditionalDocumentFile1;
+        public string AdditionalDocumentName2;
+        public byte[] AdditionalDocumentFile2;
+        public string AdditionalDocumentName3;
+        public byte[] AdditionalDocumentFile3;
+        public string AdditionalDocumentName4;
+        public byte[] AdditionalDocumentFile4;
+        public string CustomerSafteyFileName;
+        public byte[] CustomerSafteyFile;
+    }
 }

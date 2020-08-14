@@ -174,8 +174,6 @@ namespace Claysys.PPP.Forgiveness
         private static async Task UseCaseOne(SbaForgiveness forgivenessItem)
         {
 
-
-
             var sbaForgivenessObj = await Methods.Methods.InvokeSbaLoanForgiveness(sbaLoanForgiveness, forgivenessItem);
             if (!string.IsNullOrEmpty(sbaForgivenessObj.slug))
             {
@@ -250,7 +248,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.rawDocument = documentDetail.EmployeeJobFile;
                         await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber);
                     }
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollBName))
+                    if (!string.IsNullOrEmpty(documentDetail.CompanyOpsName))
                     {
                         sbaLoanDocuments.DocumentName = documentDetail.CompanyOpsName;
                         sbaLoanDocuments.documentType = "13";
@@ -267,6 +265,19 @@ namespace Claysys.PPP.Forgiveness
                         await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber);
                     }
                 }
+                else
+                {
+                    var documentDetail = dataManagementObj.GetForgivenessDocumentsFullApp(pppSbaNumber);
+                    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName1))
+                    {
+                        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName1;
+                        sbaLoanDocuments.documentType = "23";
+                        sbaLoanDocuments.etranId = pppSlug;
+                        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile1;
+                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber);
+                    }
+                }
+                #region For reference
                 //var documentObj = await Methods.Methods.GetDocumentTypes(sbaLoanForgiveness);
 
                 //sbaLoanDocuments.DocumentName = "payroll.docx";
@@ -315,7 +326,8 @@ namespace Claysys.PPP.Forgiveness
                 //sbaLoanDocuments.documentType = "15";
                 //sbaLoanDocuments.etranId = "64bf0f5b-c088-4efe-99a7-bd65b73920ae";
                 //sbaLoanDocuments.rawDocument = @"C:\Users\Vishnu\Desktop\payroll.docx";
-                //await Methods.Methods.uploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber);
+                //await Methods.Methods.uploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber); 
+                #endregion
             }
         }
 

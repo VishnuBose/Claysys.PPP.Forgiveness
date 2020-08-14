@@ -26,7 +26,6 @@ namespace Claysys.PPP.Forgiveness.DAL
         string _selectFourDataProcName = ConfigurationManager.AppSettings["SelectFourData"];
         string connectionString = ConfigurationManager.ConnectionStrings["condata"].ConnectionString;
         String _getDocumentEZ = ConfigurationManager.AppSettings["SelectDocumentEZ"];
-
         string _selectProcNameMDC = ConfigurationManager.AppSettings["TestDataSPMDC"];
         string connectionStringMDC = ConfigurationManager.ConnectionStrings["condataMDC"].ConnectionString;
 
@@ -68,6 +67,82 @@ namespace Claysys.PPP.Forgiveness.DAL
             return SbaForgivenessList;
         }
 
+        public ForgivenessDocumentsFullApp GetForgivenessDocumentsFullApp(string sbaLoanNum)
+        {
+            ForgivenessDocumentsFullApp document = new ForgivenessDocumentsFullApp();
+            using (SqlConnection _sqlCon = new SqlConnection(connectionString))
+            {
+                if (Utility.Utility.IsEventLogged) Utility.Utility.LogAction("Calling " + _selectProcName + "In data management class");
+                try
+                {
+                    _sqlCon.Open();
+
+                    SqlCommand sql_cmnd = new SqlCommand(_getDocumentEZ, _sqlCon);
+                    sql_cmnd.Parameters.AddWithValue("@sbaLoanNumber", sbaLoanNum);
+                    sql_cmnd.CommandType = CommandType.StoredProcedure;
+                    SqlDataReader reader = sql_cmnd.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        document.PayrollCompensationName = Convert.ToString(reader["PayrollCompensationName"]);
+                        if (!string.IsNullOrEmpty(document.PayrollCompensationName))
+                            document.PayrollCompensationFile = (byte[])(reader["PayrollCompensationFile"]);
+                        document.PayrollTaxFormName = Convert.ToString(reader["PayrollTaxFormName"]);
+                        if (!string.IsNullOrEmpty(document.PayrollTaxFormName))
+                            document.PayrollTaxFormFile = (byte[])(reader["PayrollTaxFormFile"]);
+                        document.PayrollPayementsName = Convert.ToString(reader["PayrollPayementsName"]);
+                        if (!string.IsNullOrEmpty(document.PayrollPayementsName))
+                            document.PayrollPayementsFile = (byte[])(reader["PayrollPayementsFile"]);
+                        document.FTEDocumentationName1 = Convert.ToString(reader["FTEDocumentationName1"]);
+                        if (!string.IsNullOrEmpty(document.FTEDocumentationName1))
+                            document.FTEDocumentFile1 = (byte[])(reader["FTEDocumentFile1"]);
+                        document.FTEDocumentationName2 = Convert.ToString(reader["FTEDocumentationName2"]);
+                        if (!string.IsNullOrEmpty(document.FTEDocumentationName2))
+                            document.FTEDocumentFile2 = (byte[])(reader["FTEDocumentFile2"]);
+                        document.FTEDocumentationName3 = Convert.ToString(reader["FTEDocumentationName3"]);
+                        if (!string.IsNullOrEmpty(document.FTEDocumentationName3))
+                            document.FTEDocumentFile3 = (byte[])(reader["FTEDocumentFile3"]);
+                        document.NonpayrollName1 = Convert.ToString(reader["NonpayrollName1"]);
+                        if (!string.IsNullOrEmpty(document.NonpayrollName1))
+                            document.NonpayrollFile1 = (byte[])(reader["NonpayrollFile1"]);
+                        document.NonpayrollName2 = Convert.ToString(reader["NonpayrollName2"]);
+                        if (!string.IsNullOrEmpty(document.NonpayrollName2))
+                            document.NonpayrollFile2 = (byte[])(reader["NonpayrollFile2"]);
+                        document.NonpayrollName3 = Convert.ToString(reader["NonpayrollName3"]);
+                        if (!string.IsNullOrEmpty(document.NonpayrollName3))
+                            document.NonpayrollFile3 = (byte[])(reader["NonpayrollFile3"]);
+                        document.AdditionalDocumentName1 = Convert.ToString(reader["AdditionalDocumentName1"]);
+                        if (!string.IsNullOrEmpty(document.AdditionalDocumentName1))
+                            document.AdditionalDocumentFile1 = (byte[])(reader["AdditionalDocumentFile1"]);
+                        document.AdditionalDocumentName2 = Convert.ToString(reader["AdditionalDocumentName2"]);
+                        if (!string.IsNullOrEmpty(document.AdditionalDocumentName2))
+                            document.AdditionalDocumentFile2 = (byte[])(reader["AdditionalDocumentFile2"]);
+                        document.AdditionalDocumentName3 = Convert.ToString(reader["AdditionalDocumentName3"]);
+                        if (!string.IsNullOrEmpty(document.AdditionalDocumentName3))
+                            document.AdditionalDocumentFile3 = (byte[])(reader["AdditionalDocumentFile3"]);
+                        document.AdditionalDocumentName4 = Convert.ToString(reader["AdditionalDocumentName4"]);
+                        if (!string.IsNullOrEmpty(document.AdditionalDocumentName4))
+                            document.AdditionalDocumentFile4 = (byte[])(reader["AdditionalDocumentFile4"]);
+                        document.CustomerSafteyFileName = Convert.ToString(reader["CustomerSafteyFileName"]);
+                        if (!string.IsNullOrEmpty(document.CustomerSafteyFileName))
+                            document.CustomerSafteyFile = (byte[])(reader["CustomerSafteyFile"]);
+                    }
+                    if (Utility.Utility.IsEventLogged) Utility.Utility.LogAction("GetForgivenessDetails Stored Procedure executed successfully");
+                }
+                catch (Exception ex)
+                {
+                    Utility.Utility.LogAction("GetForgivenessDetails Stored Procedure execution failed with error " + ex.Message);
+
+                }
+
+                finally
+                {
+                    _sqlCon.Close();
+                }
+
+            }
+            return document;
+        }
 
         public ForgivenessDocumentsEZ GetForgivenessDocumentsEZ(string sbaLoanNum)
         {
