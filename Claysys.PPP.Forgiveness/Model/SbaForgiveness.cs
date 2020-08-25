@@ -186,4 +186,14 @@ namespace Claysys.PPP.Forgiveness.Model
 
         public string DocumentType;
     }
+
+    public class CreditUnionData
+    {
+        public string CUName { get; set; }
+        public string ConnectionString { get; set; }
+        public string Vendorkey { get; set; }
+        public string Token { get; set; }
+        public bool Active { get; set; }
+    }
+
 }
