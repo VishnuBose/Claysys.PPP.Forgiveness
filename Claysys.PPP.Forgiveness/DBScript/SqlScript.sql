@@ -157,7 +157,7 @@ CREATE PROCEDURE [dbo].[Sps_ForgivenessApplicationSelect]
 AS
 BEGIN
 	(
-			SELECT LF.SBAPPPLoanNumber AS SBALoanNumber
+			SELECT TOP 50 LF.SBAPPPLoanNumber AS SBALoanNumber
 				,LF.LoanApplicationNumber
 				,LF.LoanDisbursementDate AS PPPLoandisbursementDate
 				,LF.PrimaryContact AS PrimaryContact
@@ -263,7 +263,7 @@ BEGIN
 	UNION ALL
 	
 	(
-		SELECT EZ.SBALoanNumber
+		SELECT TOP 50 EZ.SBALoanNumber
 			,EZ.LoanApplicationNumber
 			,PPPLoandisbursementDate
 			,PrimaryContact
