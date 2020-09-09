@@ -5,8 +5,12 @@ using Claysys.PPP.Forgiveness.service;
 
 namespace Claysys.PPP.Forgiveness.controller
 {
-    public class SbaLoanForgivenessMessageController
+    public class SbaLoanForgivenessMessageController : IDisposable
     {
+        public SbaLoanForgivenessMessageController()
+        {
+
+        }
         private readonly SbaLoanForgivenessMessageService sbaLoanForgivenessMessageService;
 
         public SbaLoanForgivenessMessageController(SbaLoanForgivenessMessageService sbaLoanForgivenessMessageService)
@@ -30,6 +34,10 @@ namespace Claysys.PPP.Forgiveness.controller
         {
             Utility.Utility.LogAction("Retreiving LoanForgiveness Message");
             return sbaLoanForgivenessMessageService.getLoanMessagesBySlug(slug, loanForgivenessMessageUrl);
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

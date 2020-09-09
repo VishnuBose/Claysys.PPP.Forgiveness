@@ -10,10 +10,10 @@ namespace Claysys.PPP.Forgiveness.Model
     public class SbaForgiveness
     {
         public double sbaLoanNumber { get; set; }
-        public double flLoanNumber { get; set; }
+        public long flLoanNumber { get; set; }
         public string fundingDate { get; set; }
         public string Entity_Name { get; set; }
-        public float pppLoanAmount { get; set; }
+        public double pppLoanAmount { get; set; }
         public int einSsn { get; set; }
         public string applicationStatus { get; set; }
         public string error { get; set; }
@@ -21,7 +21,7 @@ namespace Claysys.PPP.Forgiveness.Model
 
         public string forgive_eidl_amount { get; set; }
 
-        public int forgive_eidl_application_number { get; set; }
+        public long forgive_eidl_application_number { get; set; }
 
         public string forgive_payroll { get; set; }
 
@@ -185,5 +185,19 @@ namespace Claysys.PPP.Forgiveness.Model
         public byte[] fileContent;
 
         public string DocumentType;
+
+        public string SBALoanNo;
+
+        public string SlugID;
     }
+
+    public class CreditUnionData
+    {
+        public string CUName { get; set; }
+        public string ConnectionString { get; set; }
+        public string Vendorkey { get; set; }
+        public string Token { get; set; }
+        public bool Active { get; set; }
+    }
+
 }

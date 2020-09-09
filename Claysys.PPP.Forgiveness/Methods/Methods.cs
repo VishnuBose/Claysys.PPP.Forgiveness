@@ -66,7 +66,7 @@ namespace Claysys.PPP.Forgiveness.Methods
 
         public static async Task<bool> DeleteSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, string slug, string sbaNumber)
         {
-            return await sbaLoanForgiveness.DeleteSbaLoanForgiveness(slug, sbaNumber, "ppp_loan_forgiveness_requests"); // loanForgivenessUrl - to be passed
+            return await sbaLoanForgiveness.DeleteSbaLoanForgiveness(slug, sbaNumber, "ppp_loan_forgiveness_requests"); 
         }
 
         public static async Task<SbaPPPLoanForgiveness> InvokeSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, SbaForgiveness sbaForgivenessobj)
@@ -89,37 +89,33 @@ namespace Claysys.PPP.Forgiveness.Methods
                         funding_date = Convert.ToString(sbaForgivenessobj.fundingDate),
                         forgive_eidl_amount = Convert.ToDouble(sbaForgivenessobj.forgive_eidl_amount),
                         forgive_eidl_application_number = sbaForgivenessobj.forgive_eidl_application_number,
-                        forgive_payroll = Convert.ToDouble(sbaForgivenessobj.forgive_payroll), //"1000.00",//Convert.ToString(sbaForgivenessobj.pppLoanAmount + 2000),
-                        forgive_rent = Convert.ToDouble(sbaForgivenessobj.forgive_rent), //"1000.00",
-                        forgive_utilities = Convert.ToDouble(sbaForgivenessobj.forgive_utilities), //"1000.00",
-                        forgive_mortgage = Convert.ToDouble(sbaForgivenessobj.forgive_mortgage), //"1000.00",
-                        address1 = sbaForgivenessobj.address1, //"stringss",
-                        address2 = sbaForgivenessobj.address2, //"stringsss",
-                        dba_name = sbaForgivenessobj.dba_name, //"stringssssss",
-                        phone_number = sbaForgivenessobj.phone_number, //"1234567890",
-                                                                       //assign_to_user = sbaForgivenessobj. //null,
-                        forgive_fte_at_loan_application = sbaForgivenessobj.forgive_fte_at_loan_application, //10,
-                                                                                                             //updated = sbaForgivenessobj. //"06/28/2020",
-                        forgive_line_6_3508_or_line_5_3508ez = Convert.ToDouble(sbaForgivenessobj.forgive_line_6_3508_or_line_5_3508ez), //"3999.00",//Convert.ToString(sbaForgivenessobj.pppLoanAmount + 2000),//Convert.ToString(sbaForgivenessobj.pppLoanAmount),
-                        forgive_payroll_cost_60_percent_requirement = Convert.ToDouble(sbaForgivenessobj.forgive_payroll_cost_60_percent_requirement), //"1666.66",//Convert.ToString((sbaForgivenessobj.pppLoanAmount + 2000) * 0.6),//Convert.ToString(sbaForgivenessobj.pppLoanAmount * 0.6),
-                        forgive_amount = Convert.ToDouble(sbaForgivenessobj.forgive_amount), //"1666.66",//Convert.ToString((sbaForgivenessobj.pppLoanAmount)),//Convert.ToString(sbaForgivenessobj.pppLoanAmount * 0.6),
-                        forgive_fte_at_forgiveness_application = Convert.ToInt32(sbaForgivenessobj.forgive_fte_at_forgiveness_application), //10,
+                        forgive_payroll = Convert.ToDouble(sbaForgivenessobj.forgive_payroll), 
+                        forgive_rent = Convert.ToDouble(sbaForgivenessobj.forgive_rent),
+                        forgive_utilities = Convert.ToDouble(sbaForgivenessobj.forgive_utilities), 
+                        forgive_mortgage = Convert.ToDouble(sbaForgivenessobj.forgive_mortgage), 
+                        address1 = sbaForgivenessobj.address1, 
+                        address2 = sbaForgivenessobj.address2, 
+                        dba_name = sbaForgivenessobj.dba_name, 
+                        phone_number = sbaForgivenessobj.phone_number,                                               
+                        forgive_fte_at_loan_application = sbaForgivenessobj.forgive_fte_at_loan_application,                                                                                      
+                        forgive_line_6_3508_or_line_5_3508ez = Convert.ToDouble(sbaForgivenessobj.forgive_line_6_3508_or_line_5_3508ez), 
+                        forgive_payroll_cost_60_percent_requirement = Convert.ToDouble(sbaForgivenessobj.forgive_payroll_cost_60_percent_requirement), 
+                        forgive_amount = Convert.ToDouble(sbaForgivenessobj.forgive_amount), 
+                        forgive_fte_at_forgiveness_application = Convert.ToInt32(sbaForgivenessobj.forgive_fte_at_forgiveness_application), 
+                        forgive_covered_period_from = sbaForgivenessobj.forgive_covered_period_from, 
+                        forgive_covered_period_to = sbaForgivenessobj.forgive_covered_period_to, 
+                        forgive_alternate_covered_period_from = sbaForgivenessobj.forgive_alternate_covered_period_from, 
+                        forgive_alternate_covered_period_to = sbaForgivenessobj.forgive_alternate_covered_period_to, 
+                        forgive_2_million = sbaForgivenessobj.forgive_2_million, 
+                        forgive_payroll_schedule = sbaForgivenessobj.forgive_payroll_schedule, 
+                        forgive_lender_decision = sbaForgivenessobj.forgive_lender_decision, 
+                        primary_email = sbaForgivenessobj.primary_email, 
+                        primary_name = sbaForgivenessobj.primary_name, 
+                        ez_form = sbaForgivenessobj.ez_form, 
 
-                        forgive_covered_period_from = sbaForgivenessobj.forgive_covered_period_from, //"2020-07-06",
-                        forgive_covered_period_to = sbaForgivenessobj.forgive_covered_period_to, //"2020-09-06",
-                        forgive_alternate_covered_period_from = sbaForgivenessobj.forgive_alternate_covered_period_from, //"2020-07-06",
-                        forgive_alternate_covered_period_to = sbaForgivenessobj.forgive_alternate_covered_period_to, //"2020-09-06",
-                        forgive_2_million = sbaForgivenessobj.forgive_2_million, //false,
-                        forgive_payroll_schedule = sbaForgivenessobj.forgive_payroll_schedule, //"weekly",
-                        forgive_lender_decision = sbaForgivenessobj.forgive_lender_decision, //1,
-                        primary_email = sbaForgivenessobj.primary_email, //"user@example.com",
-                        primary_name = sbaForgivenessobj.primary_name, //"MOCKDATA",
-                        ez_form = sbaForgivenessobj.ez_form, //false,
-
-                        forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation //true
+                        forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation 
                     },
-                    //created = "06/28/2020",
-                    //assigned_to_user = " "
+                    
                 };
             }
             else
@@ -138,56 +134,55 @@ namespace Claysys.PPP.Forgiveness.Methods
                         funding_date = Convert.ToString(sbaForgivenessobj.fundingDate),
                         forgive_eidl_amount = Convert.ToDouble(sbaForgivenessobj.forgive_eidl_amount),
                         forgive_eidl_application_number = sbaForgivenessobj.forgive_eidl_application_number,
-                        forgive_payroll = Convert.ToDouble(sbaForgivenessobj.forgive_payroll), //"1000.00",//Convert.ToString(sbaForgivenessobj.pppLoanAmount + 2000),
-                        forgive_rent = Convert.ToDouble(sbaForgivenessobj.forgive_rent), //"1000.00",
-                        forgive_utilities = Convert.ToDouble(sbaForgivenessobj.forgive_utilities), //"1000.00",
-                        forgive_mortgage = Convert.ToDouble(sbaForgivenessobj.forgive_mortgage), //"1000.00",
-                        address1 = sbaForgivenessobj.address1, //"stringss",
-                        address2 = sbaForgivenessobj.address2, //"stringsss",
-                        dba_name = sbaForgivenessobj.dba_name, //"stringssssss",
-                        phone_number = sbaForgivenessobj.phone_number, //"1234567890",
-                                                                       //assign_to_user = sbaForgivenessobj. //null,
-                        forgive_fte_at_loan_application = sbaForgivenessobj.forgive_fte_at_loan_application, //10,
-                                                                                                             //updated = sbaForgivenessobj. //"06/28/2020",
-                        forgive_line_6_3508_or_line_5_3508ez = Convert.ToDouble(sbaForgivenessobj.forgive_line_6_3508_or_line_5_3508ez), //"3999.00",//Convert.ToString(sbaForgivenessobj.pppLoanAmount + 2000),//Convert.ToString(sbaForgivenessobj.pppLoanAmount),
-                        forgive_payroll_cost_60_percent_requirement = Convert.ToDouble(sbaForgivenessobj.forgive_payroll_cost_60_percent_requirement), //"1666.66",//Convert.ToString((sbaForgivenessobj.pppLoanAmount + 2000) * 0.6),//Convert.ToString(sbaForgivenessobj.pppLoanAmount * 0.6),
-                        forgive_amount = Convert.ToDouble(sbaForgivenessobj.forgive_amount), //"1666.66",//Convert.ToString((sbaForgivenessobj.pppLoanAmount)),//Convert.ToString(sbaForgivenessobj.pppLoanAmount * 0.6),
-                        forgive_fte_at_forgiveness_application = sbaForgivenessobj.forgive_fte_at_forgiveness_application, //10,
+                        forgive_payroll = Convert.ToDouble(sbaForgivenessobj.forgive_payroll), 
+                        forgive_rent = Convert.ToDouble(sbaForgivenessobj.forgive_rent), 
+                        forgive_utilities = Convert.ToDouble(sbaForgivenessobj.forgive_utilities), 
+                        address1 = sbaForgivenessobj.address1, 
+                        address2 = sbaForgivenessobj.address2, 
+                        dba_name = sbaForgivenessobj.dba_name, 
+                        phone_number = sbaForgivenessobj.phone_number, 
+                        forgive_mortgage = Convert.ToDouble(sbaForgivenessobj.forgive_mortgage),
 
-                        forgive_modified_total = Convert.ToDouble(sbaForgivenessobj.forgive_modified_total), //"3999.00",//Convert.ToString(sbaForgivenessobj.pppLoanAmount + 2000),
-                        forgive_schedule_a_line_1 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_1), //"1.00",//Convert.ToString(sbaForgivenessobj.pppLoanAmount),
-                        forgive_schedule_a_line_2 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_2), //"1.00",
-                        forgive_schedule_a_line_3_checkbox = Convert.ToBoolean(sbaForgivenessobj.forgive_schedule_a_line_3_checkbox), //true,
-                        forgive_schedule_a_line_3 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_3), //"1.00",
-                        forgive_schedule_a_line_4 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_4), //"1.00",
-                        forgive_schedule_a_line_5 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_5), //"1.00",
-                        forgive_schedule_a_line_6 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_6), //"1.00",
-                        forgive_schedule_a_line_7 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_7), //"1.00",
-                        forgive_schedule_a_line_8 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_8), //"1.00",
-                        forgive_schedule_a_line_9 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_9), //"1.00",
-                        forgive_schedule_a_line_10 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_10), //"6.00",//Convert.ToString(sbaForgivenessobj.pppLoanAmount + 2000),
-                        forgive_schedule_a_line_10_checkbox = Convert.ToBoolean(sbaForgivenessobj.forgive_schedule_a_line_10_checkbox), //true,
-                        forgive_schedule_a_line_11 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_11), //"10",
-                        forgive_schedule_a_line_12 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_12), //"10",
-                        forgive_schedule_a_line_13 = Convert.ToDouble(sbaForgivenessobj.forgive_schedule_a_line_13), //"1",
-                        no_reduction_in_employees = Convert.ToBoolean(sbaForgivenessobj.no_reduction_in_employees), //true,
-                        no_reduction_in_employees_and_covid_impact = sbaForgivenessobj.no_reduction_in_employees_and_covid_impact, //true,
+                        forgive_fte_at_loan_application = sbaForgivenessobj.forgive_fte_at_loan_application, 
+                                                                                                             
+                        forgive_line_6_3508_or_line_5_3508ez = Convert.ToDouble(sbaForgivenessobj.forgive_line_6_3508_or_line_5_3508ez), 
+                        forgive_payroll_cost_60_percent_requirement = Convert.ToDouble(sbaForgivenessobj.forgive_payroll_cost_60_percent_requirement), 
+                        forgive_amount = Convert.ToDouble(sbaForgivenessobj.forgive_amount), 
+                        forgive_fte_at_forgiveness_application = sbaForgivenessobj.forgive_fte_at_forgiveness_application, 
 
-                        forgive_covered_period_from = sbaForgivenessobj.forgive_covered_period_from, //"2020-07-06",
-                        forgive_covered_period_to = sbaForgivenessobj.forgive_covered_period_to, //"2020-09-06",
-                        forgive_alternate_covered_period_from = sbaForgivenessobj.forgive_alternate_covered_period_from, //"2020-07-06",
-                        forgive_alternate_covered_period_to = sbaForgivenessobj.forgive_alternate_covered_period_to, //"2020-09-06",
-                        forgive_2_million = sbaForgivenessobj.forgive_2_million, //false,
-                        forgive_payroll_schedule = sbaForgivenessobj.forgive_payroll_schedule, //"weekly",
-                        forgive_lender_decision = sbaForgivenessobj.forgive_lender_decision, //1,
-                        primary_email = sbaForgivenessobj.primary_email, //"user@example.com",
-                        primary_name = sbaForgivenessobj.primary_name, //"MOCKDATA",
-                        ez_form = sbaForgivenessobj.ez_form, //false,
+                        forgive_modified_total = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_modified_total) ? "0.00" : sbaForgivenessobj.forgive_modified_total), 
+                        forgive_schedule_a_line_1 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_1) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_1), 
+                        forgive_schedule_a_line_2 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_2) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_2),
+                        forgive_schedule_a_line_3_checkbox = Convert.ToBoolean(sbaForgivenessobj.forgive_schedule_a_line_3_checkbox), 
+                        forgive_schedule_a_line_3 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_3) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_3), 
+                        forgive_schedule_a_line_4 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_4) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_4), 
+                        forgive_schedule_a_line_5 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_5) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_5), 
+                        forgive_schedule_a_line_6 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_6) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_6), 
+                        forgive_schedule_a_line_7 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_7) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_7), 
+                        forgive_schedule_a_line_8 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_8) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_8), 
+                        forgive_schedule_a_line_9 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_9) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_9), 
+                        forgive_schedule_a_line_10 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_10) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_10), 
+                        forgive_schedule_a_line_10_checkbox = Convert.ToBoolean(sbaForgivenessobj.forgive_schedule_a_line_10_checkbox), 
+                        forgive_schedule_a_line_11 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_11) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_11), 
+                        forgive_schedule_a_line_12 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_12) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_12), 
+                        forgive_schedule_a_line_13 = Convert.ToDouble(string.IsNullOrEmpty(sbaForgivenessobj.forgive_schedule_a_line_13) ? "0.00" : sbaForgivenessobj.forgive_schedule_a_line_13), 
+                        no_reduction_in_employees = Convert.ToBoolean(sbaForgivenessobj.no_reduction_in_employees), 
+                        no_reduction_in_employees_and_covid_impact = sbaForgivenessobj.no_reduction_in_employees_and_covid_impact, 
 
-                        forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation //true
+                        forgive_covered_period_from = sbaForgivenessobj.forgive_covered_period_from, 
+                        forgive_covered_period_to = sbaForgivenessobj.forgive_covered_period_to, 
+                        forgive_alternate_covered_period_from = sbaForgivenessobj.forgive_alternate_covered_period_from, 
+                        forgive_alternate_covered_period_to = sbaForgivenessobj.forgive_alternate_covered_period_to, 
+                        forgive_2_million = sbaForgivenessobj.forgive_2_million, 
+                        forgive_payroll_schedule = sbaForgivenessobj.forgive_payroll_schedule, 
+                        forgive_lender_decision = sbaForgivenessobj.forgive_lender_decision, 
+                        primary_email = sbaForgivenessobj.primary_email, 
+                        primary_name = sbaForgivenessobj.primary_name, 
+                        ez_form = sbaForgivenessobj.ez_form, 
+
+                        forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation 
                     },
-                    //created = "06/28/2020",
-                    //assigned_to_user = " "
+                    
                 };
             }
             SbaPPPLoanForgiveness sbaPppLoanForgiveness =
@@ -206,21 +201,21 @@ namespace Claysys.PPP.Forgiveness.Methods
             return new SbaPPPLoanForgiveness();
         }
 
-        public static async Task UploadForgivenessDocument(SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber)
+        public static async Task UploadForgivenessDocument(SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber, string slugId)
         {
             LoanDocumentResponse response = await UploadForgivenessDocument(sbaLoanDocuments.DocumentName, sbaLoanDocuments.documentType, sbaLoanDocuments.etranId, sbaLoanDocuments.rawDocument
-          , "ppp_loan_documents", sbaLoanDocuments, sbaNumber);
+          , "ppp_loan_documents", sbaLoanDocuments, sbaNumber, slugId);
 
             string serialized = JsonConvert.SerializeObject(response,
                new JsonSerializerSettings { DateFormatHandling = DateFormatHandling.IsoDateFormat });
 
         }
 
-        public static async Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string apiMethod, SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber)
+        public static async Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string apiMethod, SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber,string slugId)
         {
 
             LoanDocumentResponse loanDocument = await sbaLoanDocuments.UploadForgivenessDocument(requestName,
-                    requestDocument_type, etran_loan, document, apiMethod, sbaNumber);
+                    requestDocument_type, etran_loan, document, apiMethod, sbaNumber, slugId);
             return loanDocument;
         }
 
@@ -299,10 +294,7 @@ namespace Claysys.PPP.Forgiveness.Methods
             }
         }
 
-        //public static async Task<bool> deleteSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness)
-        //{
-        //    return await sbaLoanForgiveness.deleteSbaLoanForgiveness(slug, pppLoanDocumentTypes);
-        //}
+        
     }
 
 }

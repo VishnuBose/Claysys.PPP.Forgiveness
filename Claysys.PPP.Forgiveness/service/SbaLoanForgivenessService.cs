@@ -51,16 +51,16 @@ namespace Claysys.PPP.Forgiveness.service
             return sbaRestApiClient.GetSbaLoanForgiveness(loanForgivenessUrl);
         }
 
-        public async Task<bool> DeleteSbaLoanForgiveness(string slug,string sbaNumber, string loanForgivenessUrl)
+        public async Task<bool> DeleteSbaLoanForgiveness(string slug, string sbaNumber, string loanForgivenessUrl)
         {
             Utility.Utility.LogAction($"{sbaNumber} : Deleting Sba Loan Forgiveness request in SbaLoanForgivenessService.");
-            return await sbaRestApiClient.DeleteSbaLoanForgiveness(slug,sbaNumber, loanForgivenessUrl);
+            return await sbaRestApiClient.DeleteSbaLoanForgiveness(slug, sbaNumber, loanForgivenessUrl);
         }
 
-        public Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl,string sbaNumber)
+        public Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl, string sbaNumber)
         {
             Utility.Utility.LogAction("Retreiving Sba Loan Forgiveness request");
-            return sbaRestApiClient.UploadForgivenessDocument( requestName,  requestDocument_type,  etran_loan,  document,  loanDocumentsUrl,sbaNumber);
+            return sbaRestApiClient.UploadForgivenessDocument(requestName, requestDocument_type, etran_loan, document, loanDocumentsUrl, sbaNumber);
         }
     }
 }
