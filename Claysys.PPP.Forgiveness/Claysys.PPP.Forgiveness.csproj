@@ -113,5 +113,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />
+  <ItemGroup>
+    <Content Include="DBScript\SQLQuerySCCU.sql" />
+    <Content Include="DBScript\SqlScript.sql" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

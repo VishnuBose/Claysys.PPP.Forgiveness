@@ -45,10 +45,10 @@ namespace Claysys.PPP.Forgiveness.controller
             return document;
         }
 
-        public Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl, string sbaNumber)
+        public Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl, string sbaNumber, string slugId)
         {
             Utility.Utility.LogAction($"{sbaNumber} : Loan Document in SbaLoanDocumentsController.");
-            Task<LoanDocumentResponse> loanDocument = sbaLoanDocumentService.UploadForgivenessDocument(requestName, requestDocument_type, etran_loan, document, loanDocumentsUrl, sbaNumber);
+            Task<LoanDocumentResponse> loanDocument = sbaLoanDocumentService.UploadForgivenessDocument(requestName, requestDocument_type, etran_loan, document, loanDocumentsUrl, sbaNumber, slugId);
             return loanDocument;
         }
     }

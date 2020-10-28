@@ -28,7 +28,7 @@ namespace Claysys.PPP.Forgiveness.domain
 
 		public double? forgive_eidl_amount { get; set; }
 
-		public int? forgive_eidl_application_number { get; set; }
+		public long? forgive_eidl_application_number { get; set; }
 
 		public double? forgive_payroll { get; set; }
 
@@ -108,6 +108,8 @@ namespace Claysys.PPP.Forgiveness.domain
 
 		public bool ez_form { get; set; }
 
+		public bool s_form { get; set; }
+
 		public bool no_reduction_in_employees { get; set; }
 
 		public bool no_reduction_in_employees_and_covid_impact { get; set; }
@@ -131,6 +133,9 @@ namespace Claysys.PPP.Forgiveness.domain
 		public double? final_forgive_amount_with_interest { get; set; }
 
 		public string sba_decision { get; set; }
+
+		public string payment_status { get; set; }
+
 
 		public Organization organization { get; set; }
 
