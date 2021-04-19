@@ -28,9 +28,10 @@ namespace Claysys.PPP.Forgiveness.DAL
         string _getForgivessCuDetails = ConfigurationManager.AppSettings["GetForgivessCuDetails"];
         string _updateForgivessPaymentDetails = ConfigurationManager.AppSettings["UpdateForgivenessPayment"];
         string _selectDocumentCount = ConfigurationManager.AppSettings["SelectDocumentCount"];
+        string _insertForgivenessSBADoc = ConfigurationManager.AppSettings["ForgivenessSBADoc"];
 
 
-
+        public static Object lockObj =  new object();
         public string connectionString;
         public string cuName;
 
@@ -113,9 +114,9 @@ namespace Claysys.PPP.Forgiveness.DAL
             }
         }
 
-        public void UpdateForgivenessPaymentDetails(SbaPPPLoanForgivenessStatusResponse sbsData)
+        public void UpdateForgivenessPaymentDetails(SbaPPPLoanForgivenessStatusResponse sbsData, string conString)
         {
-            using (SqlConnection _sqlCon = new SqlConnection(Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.connectionString))
+            using (SqlConnection _sqlCon = new SqlConnection(conString))
             {
                 try
                 {
@@ -128,7 +129,7 @@ namespace Claysys.PPP.Forgiveness.DAL
                     sql_cmnd.Parameters.AddWithValue("@FinalForgiveAmount", sbsData.results[0].etran_loan.final_forgive_amount == null ? "" : sbsData.results[0].etran_loan.final_forgive_amount);
                     sql_cmnd.Parameters.AddWithValue("@SBADicisionDate", sbsData.results[0].etran_loan.approval_date == null ? "" : Convert.ToString(sbsData.results[0].etran_loan.approval_date));
                     sql_cmnd.Parameters.AddWithValue("@CalculatedInterest", sbsData.results[0].etran_loan.calculated_interest == null ? "" : Convert.ToString(sbsData.results[0].etran_loan.calculated_interest));
-                    sql_cmnd.Parameters.AddWithValue("@EIDLAdvanceReductionAmount", sbsData.results[0].etran_loan.forgive_eidl_amount == null ? "" : Convert.ToString(sbsData.results[0].etran_loan.forgive_eidl_amount));
+                    //sql_cmnd.Parameters.AddWithValue("@EIDLAdvanceReductionAmount", sbsData.results[0].etran_loan.forgive_eidl_amount == null ? "" : Convert.ToString(sbsData.results[0].etran_loan.forgive_eidl_amount));
                     sql_cmnd.Parameters.AddWithValue("@Payment", sbsData.results[0].etran_loan.final_forgive_amount_with_interest == null ? "" : Convert.ToString(sbsData.results[0].etran_loan.final_forgive_amount_with_interest));
                     sql_cmnd.Parameters.AddWithValue("@PaymentDate", sbsData.results[0].etran_loan.final_forgive_payment_date == null ? "" : Convert.ToString(sbsData.results[0].etran_loan.final_forgive_payment_date));
                     sql_cmnd.Parameters.AddWithValue("@PaymentBatch", sbsData.results[0].etran_loan.final_forgive_payment_batch == null ? "" : sbsData.results[0].etran_loan.final_forgive_payment_batch);
@@ -491,13 +492,13 @@ namespace Claysys.PPP.Forgiveness.DAL
             sbaForgivenessObj.pppLoanAmount = Convert.ToDouble(Convert.ToString(reader["PPPLoanAmount"]));
             sbaForgivenessObj.einSsn = Convert.ToString(reader["TINNumber"]).Replace("-", "");
             sbaForgivenessObj.applicationStatus = String.IsNullOrEmpty(Convert.ToString(reader["SBAStatus"])) ? "Awaiting" : Convert.ToString(reader["SBAStatus"]);
-            sbaForgivenessObj.forgive_eidl_amount = Convert.ToString(reader["EIDLAdvanceAmount"]) == "" ? "0.00" : Convert.ToString(reader["EIDLAdvanceAmount"]);
-            sbaForgivenessObj.forgive_eidl_application_number = Int64.TryParse(Convert.ToString(reader["EIDLApplicationNumber"]), out intValue) ? intValue : 0;
+            //sbaForgivenessObj.forgive_eidl_amount = Convert.ToString(reader["EIDLAdvanceAmount"]) == "" ? "0.00" : Convert.ToString(reader["EIDLAdvanceAmount"]);
+            //sbaForgivenessObj.forgive_eidl_application_number = Int64.TryParse(Convert.ToString(reader["EIDLApplicationNumber"]), out intValue) ? intValue : (long?)null;
             //sbaForgivenessObj.forgive_eidl_application_number = Convert.ToInt64(String.IsNullOrWhiteSpace(Convert.ToString(reader["EIDLApplicationNumber"])) ? 0 : reader["EIDLApplicationNumber"]);
-
+            sbaForgivenessObj.forgive_payroll = string.IsNullOrEmpty(Convert.ToString(reader["PayrollCosts"]))?"0.00": Convert.ToString(reader["PayrollCosts"]);
             if (!isSmallForm)
             {
-                sbaForgivenessObj.forgive_payroll = Convert.ToString(reader["PayrollCosts"]);
+                
                 sbaForgivenessObj.forgive_rent = Convert.ToString(reader["CFLine3"]);
                 sbaForgivenessObj.forgive_utilities = Convert.ToString(reader["CFLine4"]);
                 sbaForgivenessObj.forgive_mortgage = Convert.ToString(reader["CFLine2"]);
@@ -511,7 +512,7 @@ namespace Claysys.PPP.Forgiveness.DAL
 
             if (!isSmallForm)
             {
-                sbaForgivenessObj.forgive_line_6_3508_or_line_5_3508ez = Convert.ToString(reader["CFLine5"]);
+                sbaForgivenessObj.forgive_line_6_3508_or_line_5_3508ez = Convert.ToString(reader["CFLine5"]); // Line 9 of new form
                 sbaForgivenessObj.forgive_payroll_cost_60_percent_requirement = Convert.ToString(reader["CFLine7"]) == "" ? "0.00" : Convert.ToString(Math.Round(Convert.ToDouble(reader["CFLine7"]), 2));
             }
 
@@ -539,41 +540,36 @@ namespace Claysys.PPP.Forgiveness.DAL
                 sbaForgivenessObj.forgive_schedule_a_line_11 = Convert.ToString(reader["ForgiveScheduleALine11"]);
                 sbaForgivenessObj.forgive_schedule_a_line_12 = Convert.ToString(reader["ForgiveScheduleALine12"]);
                 sbaForgivenessObj.forgive_schedule_a_line_13 = Convert.ToString(reader["ForgiveScheduleALine13"]);
+                
+            }
+
+            if (!isSmallForm && !isEZForm)
+            {
+                sbaForgivenessObj.no_reduction_in_employees_and_covid_impact = Convert.ToBoolean(string.IsNullOrEmpty(Convert.ToString(reader["NoreductionInEmployeesAndCovidImpact"])) ? false : reader["NoreductionInEmployeesAndCovidImpact"]);
                 sbaForgivenessObj.no_reduction_in_employees = Convert.ToBoolean(string.IsNullOrEmpty(Convert.ToString(reader["NoReductionInEmployees"])) ? false : reader["NoReductionInEmployees"]);
-                sbaForgivenessObj.no_reduction_in_employees_and_covid_impact = Convert.ToBoolean(string.IsNullOrEmpty(Convert.ToString(reader["NoreductionInEmployeesAndCovidImpact"])) ? false : true);
             }
 
             if (!isSmallForm)
             {
-                sbaForgivenessObj.forgive_covered_period_from = Convert.ToDateTime(reader["CoveredPeriodFrom"]).Year + "-" + Convert.ToDateTime(reader["CoveredPeriodFrom"]).Month + "-" + Convert.ToDateTime(reader["CoveredPeriodFrom"]).Day;
-                sbaForgivenessObj.forgive_covered_period_to = Convert.ToDateTime(reader["CoveredPeriodTo"]).Year + "-" + Convert.ToDateTime(reader["CoveredPeriodTo"]).Month + "-" + Convert.ToDateTime(reader["CoveredPeriodTo"]).Day;
-                if (String.IsNullOrEmpty(Convert.ToString(reader["AltCoveredPeriodFrom"])))
-                {
-                    sbaForgivenessObj.forgive_alternate_covered_period_from = Convert.ToDateTime(reader["CoveredPeriodFrom"]).Year + "-" + Convert.ToDateTime(reader["CoveredPeriodFrom"]).Month + "-" + Convert.ToDateTime(reader["CoveredPeriodFrom"]).Day;
-                }
-                else
-                {
-                    sbaForgivenessObj.forgive_alternate_covered_period_from = Convert.ToDateTime(reader["AltCoveredPeriodFrom"]).Year + "-" + Convert.ToDateTime(reader["AltCoveredPeriodFrom"]).Month + "-" + Convert.ToDateTime(reader["AltCoveredPeriodFrom"]).Day;
-                }
 
-
-                if (String.IsNullOrEmpty(Convert.ToString(reader["AltCoveredPeriodTo"])))
-                {
-                    sbaForgivenessObj.forgive_alternate_covered_period_to = Convert.ToDateTime(reader["CoveredPeriodTo"]).Year + "-" + Convert.ToDateTime(reader["CoveredPeriodTo"]).Month + "-" + Convert.ToDateTime(reader["CoveredPeriodTo"]).Day;
-                }
-                else
-                {
-                    sbaForgivenessObj.forgive_alternate_covered_period_to = Convert.ToDateTime(reader["AltCoveredPeriodTo"]).Year + "-" + Convert.ToDateTime(reader["AltCoveredPeriodTo"]).Month + "-" + Convert.ToDateTime(reader["AltCoveredPeriodTo"]).Day;
-                }
-                sbaForgivenessObj.forgive_2_million = Convert.ToString(reader["ExcessPPPLoans"]).ToLower() == "true" ? true : false;
-                sbaForgivenessObj.forgive_payroll_schedule = Convert.ToString(reader["PayrollSchedule"]);
+                sbaForgivenessObj.forgive_covered_operations_expenditures = Convert.ToString(reader["forgive_covered_operations_expenditures"]) == "" ? "0" : Convert.ToString(reader["forgive_covered_operations_expenditures"]);  //needs to fill
+                sbaForgivenessObj.forgive_covered_property_damage_costs = Convert.ToString(reader["forgive_covered_property_damage_costs"]) == "" ? "0" : Convert.ToString(reader["forgive_covered_property_damage_costs"]); //needs to fill
+                sbaForgivenessObj.forgive_covered_supplier_costs = Convert.ToString(reader["forgive_covered_supplier_costs"]) == "" ? "0" : Convert.ToString(reader["forgive_covered_supplier_costs"]); //needs to fill
+                sbaForgivenessObj.forgive_covered_protection_expenditures = Convert.ToString(reader["forgive_covered_protection_expenditures"]) == "" ? "0" : Convert.ToString(reader["forgive_covered_protection_expenditures"]);//needs to fill
+                //sbaForgivenessObj.forgive_payroll_schedule = Convert.ToString(reader["PayrollSchedule"]);
             }
+            sbaForgivenessObj.forgive_2_million = Convert.ToString(reader["ExcessPPPLoans"]).ToLower() == "true" ? true : false;
+            sbaForgivenessObj.forgive_covered_period_from = Convert.ToDateTime(reader["CoveredPeriodFrom"]).Year + "-" + Convert.ToDateTime(reader["CoveredPeriodFrom"]).Month + "-" + Convert.ToDateTime(reader["CoveredPeriodFrom"]).Day;
+            sbaForgivenessObj.forgive_covered_period_to = Convert.ToDateTime(reader["CoveredPeriodTo"]).Year + "-" + Convert.ToDateTime(reader["CoveredPeriodTo"]).Month + "-" + Convert.ToDateTime(reader["CoveredPeriodTo"]).Day;
             sbaForgivenessObj.forgive_lender_decision = Convert.ToInt32(reader["ForgiveLenderDecision"]);
             sbaForgivenessObj.primary_email = Convert.ToString(reader["Email"]);
             sbaForgivenessObj.primary_name = Convert.ToString(reader["PrimaryContact"]); ;
             sbaForgivenessObj.ez_form = isSmallForm ? false : isEZForm;
             sbaForgivenessObj.s_form = isSmallForm;
             sbaForgivenessObj.forgive_lender_confirmation = true;
+            sbaForgivenessObj.naics_code = Convert.ToString(reader["NAICS"]); ; // needs to fill
+            sbaForgivenessObj.ppp_loan_draw = Convert.ToInt32(string.IsNullOrEmpty(Convert.ToString(reader["PPPLoanDraw"]))?1: reader["PPPLoanDraw"]); //needs to fill 
+         
             return sbaForgivenessObj;
         }
 
@@ -641,6 +637,38 @@ namespace Claysys.PPP.Forgiveness.DAL
                 {
 
                     Utility.Utility.LogAction("Failed UpdateForgivenessDb's stored procedure with error " + ex.Message);
+
+                }
+                finally
+                {
+                    _sqlCon.Close();
+                }
+
+            }
+        }
+
+
+        public void InsertForgivenessSBADoc(string sbaNumber, string url, string document)
+        {
+            using (SqlConnection _sqlCon = new SqlConnection(connectionString))
+            {
+                if (Utility.Utility.IsEventLogged) Utility.Utility.LogAction("Calling " + _insertForgivenessSBADoc + "In data management class");
+                try
+                {
+                    _sqlCon.Open();
+                    SqlCommand sql_cmnd = new SqlCommand(_insertForgivenessSBADoc, _sqlCon);
+                    sql_cmnd.CommandType = CommandType.StoredProcedure;
+                    sql_cmnd.Parameters.AddWithValue("@url", url);
+                    sql_cmnd.Parameters.AddWithValue("@sbaloanno", sbaNumber);
+                    sql_cmnd.Parameters.AddWithValue("@document", document);
+                    sql_cmnd.CommandType = CommandType.StoredProcedure;
+                    int r = sql_cmnd.ExecuteNonQuery();
+
+                }
+                catch (Exception ex)
+                {
+
+                    Utility.Utility.LogAction("Failed Update ForgivenessSBADoc table with error " + ex.Message);
 
                 }
                 finally

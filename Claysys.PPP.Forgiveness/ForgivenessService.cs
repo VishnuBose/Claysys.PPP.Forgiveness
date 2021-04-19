@@ -73,7 +73,7 @@ namespace Claysys.PPP.Forgiveness
                 sbaLoanDocuments.documentType = documentDetail.DocumentType;
                 sbaLoanDocuments.etranId = documentDetail.SlugID;
                 sbaLoanDocuments.rawDocument = documentDetail.fileContent;
-                Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, documentDetail.SBALoanNo, documentDetail.SlugID).Wait();
+                Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, documentDetail.SBALoanNo, documentDetail.SlugID);
             }
         }
 
@@ -81,29 +81,32 @@ namespace Claysys.PPP.Forgiveness
         {
             Utility.Utility.LogAction("Initializing timer and objects");
             SubmitCreditUnionApplications();
-            UpdateCreditUnionApplicationStatus();
+            //UpdateCreditUnionApplicationStatus();
         }
 
         private void UpdateCreditUnionApplicationStatus()
         {
-            List<CreditUnionData> cuDataCollection = dataManagementObj.GetCreditUnionDetails();
-            cuDataCollection.ForEach((cuData) =>
-            {
-                Utility.Utility.LogAction("CU - " + cuData.CUName + " Connection open for submission.");
-                string baseUri = ConfigurationManager.AppSettings["baseUri"],
-                apiToken = cuData.Token,
-                vendorKey = cuData.Vendorkey;
-                dataManagementObj.connectionString = cuData.ConnectionString;
-                dataManagementObj.cuName = cuData.CUName;
-                sbaLoanDocuments = new SbaLoanDocumentsController(new SbaLoanDocumentService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
-                sbaLoanForgiveness = new SbaLoanForgivenessController(new SbaLoanForgivenessService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
-                sbaLoanForgivenessMessageControllers = new SbaLoanForgivenessMessageController(new SbaLoanForgivenessMessageService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
+            //List<CreditUnionData> cuDataCollection = dataManagementObj.GetCreditUnionDetails();
+            //cuDataCollection.ForEach((cuData) =>
+            //{
+            //    Utility.Utility.LogAction("CU - " + cuData.CUName + " Connection open for submission.");
+            //    string baseUri = ConfigurationManager.AppSettings["baseUri"],
+            //    apiToken = cuData.Token,
+            //    vendorKey = cuData.Vendorkey;
+            //    dataManagementObj.connectionString = cuData.ConnectionString;
+            //    dataManagementObj.cuName = cuData.CUName;
+            //    sbaLoanDocuments = new SbaLoanDocumentsController(new SbaLoanDocumentService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
+            //    sbaLoanForgiveness = new SbaLoanForgivenessController(new SbaLoanForgivenessService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
+            //    sbaLoanForgivenessMessageControllers = new SbaLoanForgivenessMessageController(new SbaLoanForgivenessMessageService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
 
-                 //UploadExtraDocumentsToSubmitedApplication();
 
-                GetApplicationStatus();
-                GetMessageFromSBAAsync();
-            });
+
+            //    GetApplicationStatus();
+            //    ForgivessPaymentUpdate(cuData.ConnectionString);
+            //    //GetMessageFromSBAAsync();
+            //    //SBAGeneratedDocuments();
+            //    //ValidateDisbursedLoan();
+            //});
         }
 
 
@@ -122,6 +125,12 @@ namespace Claysys.PPP.Forgiveness
                 sbaLoanForgiveness = new SbaLoanForgivenessController(new SbaLoanForgivenessService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
                 sbaLoanForgivenessMessageControllers = new SbaLoanForgivenessMessageController(new SbaLoanForgivenessMessageService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
 
+                Utility.Utility.LogAction("CU - " + cuData.CUName + " Connection open for updation.");
+                GetApplicationStatus();
+                ForgivessPaymentUpdate(cuData.ConnectionString);
+                SBAGeneratedDocuments(); // Only for CACU
+                GetMessageFromSBAAsync();
+
                 ManageForgivenessData();
             });
         }
@@ -131,7 +140,7 @@ namespace Claysys.PPP.Forgiveness
             try
             {
                 Utility.Utility.LogAction("Method calling from on Update Status timer in ForgivenessService ");
-                UpdateCreditUnionApplicationStatus();
+               
             }
             catch (Exception ex)
             {
@@ -147,6 +156,7 @@ namespace Claysys.PPP.Forgiveness
             {
                 Utility.Utility.LogAction("Method calling from on Update Status timer in ForgivenessService ");
                 SubmitCreditUnionApplications();
+                //UpdateCreditUnionApplicationStatus();
             }
             catch (Exception ex)
             {
@@ -157,35 +167,145 @@ namespace Claysys.PPP.Forgiveness
 
         public void GetMessageFromSBAAsync()
         {
-            var forgivenessDetails = dataManagementObj.SelectApplicationStatus();
-            forgivenessDetails.ForEach(forgivenessItem =>
+            try
             {
-                string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);
-                Methods.Methods.getForgivenessMessagesBySbaNumber(sbaLoanForgivenessMessageControllers, 1, sbanumber, true).Wait();
-            });
+
+                var forgivenessDetails = dataManagementObj.SelectApplicationStatus();
+                forgivenessDetails.ForEach(forgivenessItem =>
+                {
+                    string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);
+                //string sbanumber = "9863517110";
+                //string sbanumber = "5668467202";
+                Methods.Methods.getForgivenessMessagesBySbaNumber(sbaLoanForgivenessMessageControllers, 1, sbanumber, true);
+                });
+            }
+            catch (Exception ex)
+            {
+                Utility.Utility.LogAction("Failed to run service due to: " + ex.Message);
+            }
         }
 
+
+        public void ForgivessPaymentUpdate(string conString)
+        {
+            try
+            {
+                var forgivenessDetails = dataManagementObj.SelectApplicationStatus();
+
+                forgivenessDetails.ForEach(forgivenessItem =>
+                {
+                    string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);
+                    Methods.Methods.GetForgivenessPaymentBySbaNumber(sbanumber, sbaLoanForgiveness, conString).Wait();
+                });
+            }
+            catch (Exception ex)
+            {
+                Utility.Utility.LogAction("Failed to run service due to: " + ex.Message);
+            }
+        }
         public void GetApplicationStatus()
         {
-            var forgivenessDetails = dataManagementObj.SelectApplicationStatus();
-            forgivenessDetails.ForEach(async forgivenessItem =>
-             {
-                 string applicationStatus = forgivenessItem.ApplicationStatus;
-                 string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);
-                 SbaPPPLoanForgivenessStatusResponse sbaObj = await Methods.Methods.GetForgivenessRequestBySbaNumber(sbanumber, sbaLoanForgiveness);
-                 string status = sbaObj.Status;
-                 string slugId = string.Empty;
-                 if (sbaObj.results.Count > 0 && !String.IsNullOrEmpty(sbaObj.results[0].slug))
+            try
+            {
+                var forgivenessDetails = dataManagementObj.SelectApplicationStatus();
+                forgivenessDetails.ForEach(forgivenessItem =>
                  {
-                     slugId = sbaObj.results[0].slug;
-                    // UpdateFogivenessDocument(sbaObj.results[0]).Wait();
+                     string applicationStatus = forgivenessItem.ApplicationStatus;
+                     string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);
+                     SbaPPPLoanForgivenessStatusResponse sbaObj = Methods.Methods.GetForgivenessRequestBySbaNumber(sbanumber, sbaLoanForgiveness);
+                     string status = sbaObj.Status;
+                     string slugId = string.Empty;
+                     if (sbaObj.results.Count > 0 && !String.IsNullOrEmpty(sbaObj.results[0].slug))
+                     {
+                         slugId = sbaObj.results[0].slug;
+                     //UpdateFogivenessDocument(sbaObj.results[0]).Wait();
                  }
-                 if (applicationStatus != status)
-                 {
-                     dataManagementObj.UpdateForgivenessDb(sbanumber, status, slugId);
-                 }
+                     if (applicationStatus != status)
+                     {
+                         dataManagementObj.UpdateForgivenessDb(sbanumber, status, slugId);
+                     }
 
-             });
+                 });
+            }
+            catch (Exception ex)
+            {
+                Utility.Utility.LogAction("Failed to run service due to: " + ex.Message);
+            }
+        }
+
+        public void SBAGeneratedDocuments()
+        {
+
+            try
+            {
+                var forgivenessDetails = dataManagementObj.SelectApplicationStatus();
+                int count = 0;
+                forgivenessDetails.ForEach(forgivenessItem =>
+                {
+                    string applicationStatus = forgivenessItem.ApplicationStatus;
+                    string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);
+
+                    if (applicationStatus == "Payment Confirmed")
+                    {
+                        SbaPPPLoanForgivenessStatusResponse sbaObj = Methods.Methods.GetForgivenessRequestBySbaNumber(sbanumber, sbaLoanForgiveness);
+                        string status = sbaObj.Status;
+
+                        var documents = sbaObj.results[0].etran_loan.documents;
+                        documents.ForEach(documentItem =>
+                        {
+                            string name = documentItem.name;
+                            string description = documentItem.document_type.description;
+                            string docTypeName = documentItem.document_type.name;
+
+                            if (description == "Document generated by the system when a payment is completed")
+                            {
+                                string url = documentItem.url;
+                                string document = documentItem.document;
+                                dataManagementObj.InsertForgivenessSBADoc(sbanumber, url, document);
+                                count++;
+                            }
+
+                        });
+
+                    }
+
+                });
+            }
+            catch (Exception ex)
+            {
+                Utility.Utility.LogAction("Failed to run service due to: " + ex.Message);
+            }
+        }
+
+
+        public void ValidateDisbursedLoan()
+        {
+            var forgivenessDetails = dataManagementObj.SelectApplicationStatus();
+            forgivenessDetails.ForEach( forgivenessItem =>
+            {
+                string applicationStatus = forgivenessItem.ApplicationStatus;
+                //string sbanumber = "4935797208";
+                string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);
+
+
+                if (sbanumber != null)
+                {
+                    //SbaPPPLoanForgivenessStatusResponse sbaObj = await Methods.Methods.GetForgivenessRequestBySbaNumber(sbanumber, sbaLoanForgiveness);
+
+                    //if (sbaObj.results[0].etran_loan.forgive_eidl_amount != 0)
+                    //{
+                    //    double? resultLoanNumber = sbaObj.results[0].etran_loan.forgive_eidl_amount;
+                    //}
+
+                    SbaPPPDisbursedLoanForgivenessStatusResponse sbaObj1 =  Methods.Methods.GetDisbursedLoanBySbaNumber(sbanumber, sbaLoanForgiveness);
+
+                    var eidResults = sbaObj1.results[0].eidl_details;
+
+                    string Orgname = sbaObj1.results[0].organization_name;
+
+                }
+
+            });
         }
 
         public void GetPaymentDashboardData()
@@ -195,31 +315,36 @@ namespace Claysys.PPP.Forgiveness
 
         public void ManageForgivenessData()
         {
-            var forgivenessDetails = dataManagementObj.GetForgivenessDetails();
+            try
+            {
+                var forgivenessDetails = dataManagementObj.GetForgivenessDetails();
 
-            forgivenessDetails.ForEach(forgivenessItem =>
-             {
-                 string status = forgivenessItem.applicationStatus;
+                forgivenessDetails.ForEach(forgivenessItem =>
+                 {
+                     string status = forgivenessItem.applicationStatus;
+                 //string edlAmount = forgivenessItem.forgive_eidl_amount;
 
                  try
-                 {
-                     switch (status)
                      {
-                         case "Awaiting":
-                         case "Failed":
-                         case "Error":
-                             UseCaseOne(forgivenessItem).Wait(); // submite and upload loan documents
+                         switch (status)
+                         {
+                             case "Awaiting":
+                             case "Failed":
+                             case "Error":
+                                 UseCaseOne(forgivenessItem); // submite and upload loan documents
                              break;
-                         case "Resubmit":
-                             UseCaseTwo(forgivenessItem).Wait();
-                             break;
-                     }
-                 }
-                 catch (Exception ex)
-                 {
-                     Utility.Utility.LogAction("Exception " + pppSbaNumber + ":" + ex.Message);
+                             case "Resubmit":
+                                 UseCaseTwo(forgivenessItem);
+                                 break;
 
-                 }
+
+                         }
+                     }
+                     catch (Exception ex)
+                     {
+                         Utility.Utility.LogAction("Exception " + pppSbaNumber + ":" + ex.Message);
+
+                     }
                  #region Reference code
 
 
@@ -240,12 +365,17 @@ namespace Claysys.PPP.Forgiveness
                  // await Methods.Methods.getForgivenessMessagesBySbaNumber(sbaLoanForgivenessMessageControllers,1,pppSbaNumber,true); 
                  #endregion
              });
+            }
+            catch (Exception ex)
+            {
+                Utility.Utility.LogAction("Failed to run service due to: " + ex.Message);
+            }
         }
 
-        private static async Task UseCaseOne(SbaForgiveness forgivenessItem)
+        private static void UseCaseOne(SbaForgiveness forgivenessItem)
         {
 
-            var sbaForgivenessObj = await Methods.Methods.InvokeSbaLoanForgiveness(sbaLoanForgiveness, forgivenessItem);
+            var sbaForgivenessObj = Methods.Methods.InvokeSbaLoanForgiveness(sbaLoanForgiveness, forgivenessItem);
             if (!string.IsNullOrEmpty(sbaForgivenessObj.slug))
             {
                 pppSlug = sbaForgivenessObj.slug;
@@ -260,7 +390,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollAFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollBName))
                     {
@@ -268,7 +398,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollBFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollCName))
                     {
@@ -276,7 +406,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollCFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollDName))
                     {
@@ -284,7 +414,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollDFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonPayrollCName))
                     {
@@ -292,7 +422,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "20";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonPayrollCFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonPayrollBName))
                     {
@@ -300,7 +430,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "21";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonPayrollBFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.CertifySalaryName))
                     {
@@ -308,7 +438,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "16";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.CertifySalaryFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.EmployeeJobName))
                     {
@@ -316,7 +446,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "15";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.EmployeeJobFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.CompanyOpsName))
                     {
@@ -324,7 +454,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "13";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.CompanyOpsFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonPayrollAName))
                     {
@@ -332,7 +462,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "8";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonPayrollAFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                 }
                 else
@@ -345,7 +475,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollCompensationFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollTaxFormName))
                     {
@@ -353,7 +483,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollTaxFormFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollPayementsName))
                     {
@@ -361,7 +491,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollPayementsFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName1))
                     {
@@ -369,7 +499,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "22";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile1;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName2))
                     {
@@ -377,7 +507,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "22";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile2;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName3))
                     {
@@ -385,7 +515,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "22";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile3;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonpayrollName1))
                     {
@@ -393,7 +523,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "8";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile1;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonpayrollName2))
                     {
@@ -401,7 +531,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "21";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile2;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonpayrollName3))
                     {
@@ -409,7 +539,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "20";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile3;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName1))
                     {
@@ -417,7 +547,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "12";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile1;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName2))
                     {
@@ -425,7 +555,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "11";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile2;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName3))
                     {
@@ -433,7 +563,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "15";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile3;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName4))
                     {
@@ -441,7 +571,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "10";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile4;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.CustomerSafteyFileName))
                     {
@@ -449,7 +579,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "13";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.CustomerSafteyFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                 }
 
@@ -459,7 +589,7 @@ namespace Claysys.PPP.Forgiveness
                     sbaLoanDocuments.documentType = documentDetail.DocumentType;
                     sbaLoanDocuments.etranId = pppSlug;
                     sbaLoanDocuments.rawDocument = documentDetail.fileContent;
-                    await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                    Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                 }
 
                 #region For reference
@@ -528,13 +658,13 @@ namespace Claysys.PPP.Forgiveness
                 {
                     var documentDetail = dataManagementObj.GetForgivenessDocumentsEZ(pppSbaNumber);
 
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollAName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollAName) <=0)
+                    if (!string.IsNullOrEmpty(documentDetail.PayrollAName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollAName) <= 0)
                     {
                         sbaLoanDocuments.DocumentName = documentDetail.PayrollAName;
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollAFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollBName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollBName) <= 0)
                     {
@@ -542,7 +672,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollBFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollCName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollCName) <= 0)
                     {
@@ -550,7 +680,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollCFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollDName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollDName) <= 0)
                     {
@@ -558,7 +688,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollDFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonPayrollCName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollCName) <= 0)
                     {
@@ -566,7 +696,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "20";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonPayrollCFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonPayrollBName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollBName) <= 0)
                     {
@@ -574,7 +704,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "21";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonPayrollBFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.CertifySalaryName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CertifySalaryName) <= 0)
                     {
@@ -582,7 +712,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "16";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.CertifySalaryFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.EmployeeJobName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.EmployeeJobName) <= 0)
                     {
@@ -590,7 +720,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "15";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.EmployeeJobFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.CompanyOpsName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CompanyOpsName) <= 0)
                     {
@@ -598,7 +728,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "13";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.CompanyOpsFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonPayrollAName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollAName) <= 0)
                     {
@@ -606,7 +736,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "8";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonPayrollAFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                 }
                 else
@@ -619,7 +749,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollCompensationFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollTaxFormName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollTaxFormName) <= 0)
                     {
@@ -627,7 +757,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollTaxFormFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.PayrollPayementsName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollPayementsName) <= 0)
                     {
@@ -635,7 +765,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "23";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.PayrollPayementsFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName1) <= 0)
                     {
@@ -643,7 +773,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "22";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile1;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName2) <= 0)
                     {
@@ -651,7 +781,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "22";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile2;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName3) <= 0)
                     {
@@ -659,7 +789,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "22";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile3;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonpayrollName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName1) <= 0)
                     {
@@ -667,7 +797,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "8";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile1;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonpayrollName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName2) <= 0)
                     {
@@ -675,7 +805,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "21";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile2;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.NonpayrollName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName3) <= 0)
                     {
@@ -683,7 +813,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "20";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile3;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName1) <= 0)
                     {
@@ -691,7 +821,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "12";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile1;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName2) <= 0)
                     {
@@ -699,7 +829,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "11";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile2;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName3) <= 0)
                     {
@@ -707,7 +837,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "15";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile3;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName4) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName4) <= 0)
                     {
@@ -715,7 +845,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "10";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile4;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                     if (!string.IsNullOrEmpty(documentDetail.CustomerSafteyFileName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CustomerSafteyFileName) <= 0)
                     {
@@ -723,7 +853,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = "13";
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.CustomerSafteyFile;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                 }
 
@@ -735,7 +865,7 @@ namespace Claysys.PPP.Forgiveness
                         sbaLoanDocuments.documentType = documentDetail.DocumentType;
                         sbaLoanDocuments.etranId = pppSlug;
                         sbaLoanDocuments.rawDocument = documentDetail.fileContent;
-                        await Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
                     }
                 }
 
@@ -793,15 +923,15 @@ namespace Claysys.PPP.Forgiveness
             }
         }
 
-        private static async Task UseCaseTwo(SbaForgiveness forgivenessItem)
+        private static void UseCaseTwo(SbaForgiveness forgivenessItem)
         {
-            SbaPPPLoanForgivenessStatusResponse sbaObj = await Methods.Methods.GetForgivenessRequestBySbaNumber(pppSbaNumber, sbaLoanForgiveness);
+            SbaPPPLoanForgivenessStatusResponse sbaObj = Methods.Methods.GetForgivenessRequestBySbaNumber(pppSbaNumber, sbaLoanForgiveness);
             if (sbaObj.Status == "Pending Validation")
             {
-                bool deleteStatasObj = await Methods.Methods.DeleteSbaLoanForgiveness(sbaLoanForgiveness, pppSlug, pppSbaNumber);
+                bool deleteStatasObj = Methods.Methods.DeleteSbaLoanForgiveness(sbaLoanForgiveness, pppSlug, pppSbaNumber);
                 if (deleteStatasObj == true)
                 {
-                    await UseCaseOne(forgivenessItem);
+                     UseCaseOne(forgivenessItem);
                 }
             }
             else

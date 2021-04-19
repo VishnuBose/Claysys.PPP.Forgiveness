@@ -20,7 +20,7 @@ namespace Claysys.PPP.Forgiveness.service
             return sbaRestApiClient.updateSbaLoanForgivenessMessageReply(request, loanForgivenessMessageUrl);
         }
 
-        public Task<SbaPPPLoanMessagesResponse> getForgivenessMessagesBySbaNumber(int page, String sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
+        public SbaPPPLoanMessagesResponse getForgivenessMessagesBySbaNumber(int page, String sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
         {
             Console.WriteLine("Retreiving Forgiveness Request Messages by SBA Number");
             return sbaRestApiClient.getForgivenessMessagesBySbaNumber(page, sbaNumber, isComplete, loanForgivenessMessageUrl);

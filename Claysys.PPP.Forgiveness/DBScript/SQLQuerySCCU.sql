@@ -242,7 +242,7 @@ BEGIN
 			,SA.EmployeesAtApplicationTime
 			,NULL AS CFLine5
 			,NULL AS CFLine7
-			,NULL AS CFLine8
+			,SA.ForgivenessAmount AS CFLine8
 			,SA.EmployeesAtForgivenessTime
 			,NULL AS ForgiveModifiedTotal
 			,NULL AS ForgiveScheduleALine1
@@ -543,6 +543,10 @@ BEGIN
 		)
 		
 END
+
+
+
+
 
 GO
 

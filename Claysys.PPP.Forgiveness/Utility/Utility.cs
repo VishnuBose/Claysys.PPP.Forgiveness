@@ -16,19 +16,22 @@ namespace Claysys.PPP.Forgiveness.Utility
         public static string DocuSignAccountID = string.Empty;
         public static void LogAction(string action)
         {
-            string logFilePath = ConfigurationManager.AppSettings["LogFileLocation"];
-            if (!Directory.Exists(logFilePath))
+            if (IsEventLogged)
             {
-                Directory.CreateDirectory(logFilePath);
-                DirectoryInfo directoryInfo = new DirectoryInfo(logFilePath);
-                DirectorySecurity accessControl = directoryInfo.GetAccessControl();
-                accessControl.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
-                directoryInfo.SetAccessControl(accessControl);
-            }
-            using (StreamWriter streamWriter = new StreamWriter(string.Concat(logFilePath, "\\", "Log-"+DateTime.Now.Date.Day+"."+DateTime.Now.Date.Month+"."+DateTime.Now.Date.Year+".txt"), true))
-            {
-                streamWriter.WriteLine(string.Concat(new string[] { DateTime.Now.ToString(), ":", DateTime.Now.Millisecond.ToString(), " -@: ", action }));
-                streamWriter.Close();
+                string logFilePath = ConfigurationManager.AppSettings["LogFileLocation"];
+                if (!Directory.Exists(logFilePath))
+                {
+                    Directory.CreateDirectory(logFilePath);
+                    DirectoryInfo directoryInfo = new DirectoryInfo(logFilePath);
+                    DirectorySecurity accessControl = directoryInfo.GetAccessControl();
+                    accessControl.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+                    directoryInfo.SetAccessControl(accessControl);
+                }
+                using (StreamWriter streamWriter = new StreamWriter(string.Concat(logFilePath, "\\", "Log-" + DateTime.Now.Date.Day + "." + DateTime.Now.Date.Month + "." + DateTime.Now.Date.Year + ".txt"), true))
+                {
+                    streamWriter.WriteLine(string.Concat(new string[] { DateTime.Now.ToString(), ":", DateTime.Now.Millisecond.ToString(), " -@: ", action }));
+                    streamWriter.Close();
+                }
             }
         }
     }

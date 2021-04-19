@@ -9,6 +9,12 @@ namespace Claysys.PPP.Forgiveness.Model
 {
     public class SbaForgiveness
     {
+        public string forgive_covered_protection_expenditures { get; set; }
+        public string forgive_covered_supplier_costs { get; set; }
+        public string forgive_covered_property_damage_costs { get; set; }
+        public string forgive_covered_operations_expenditures { get; set; }
+        public int ppp_loan_draw { get; set; }
+        public string naics_code { get; set; }
         public double sbaLoanNumber { get; set; }
         public string flLoanNumber { get; set; }
         public string fundingDate { get; set; }
@@ -19,9 +25,9 @@ namespace Claysys.PPP.Forgiveness.Model
         public string error { get; set; }
         public string slug { get; set; }
 
-        public string forgive_eidl_amount { get; set; }
+        //public string forgive_eidl_amount { get; set; }
 
-        public long forgive_eidl_application_number { get; set; }
+        public long? forgive_eidl_application_number { get; set; }
 
         public string forgive_payroll { get; set; }
 
@@ -91,13 +97,13 @@ namespace Claysys.PPP.Forgiveness.Model
 
         public string forgive_covered_period_to { get; set; }
 
-        public string forgive_alternate_covered_period_from { get; set; }
+        //public string forgive_alternate_covered_period_from { get; set; }
 
-        public string forgive_alternate_covered_period_to { get; set; }
+        //public string forgive_alternate_covered_period_to { get; set; }
 
         public bool forgive_2_million { get; set; }
 
-        public string forgive_payroll_schedule { get; set; }
+        //public string forgive_payroll_schedule { get; set; }
         public int forgive_lender_decision { get; internal set; }
 
 

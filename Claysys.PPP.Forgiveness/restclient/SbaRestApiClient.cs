@@ -12,6 +12,8 @@ using Claysys.PPP.Forgiveness.domain;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using Claysys.PPP.Forgiveness.DAL;
+using System.Text.RegularExpressions;
+using HtmlAgilityPack;
 
 namespace Claysys.PPP.Forgiveness.restclient
 {
@@ -38,10 +40,8 @@ namespace Claysys.PPP.Forgiveness.restclient
             vendorKey = VendorKey;
         }
 
-        public async Task<SbaPPPLoanForgiveness> InvokeSbaLoanForgiveness(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
-
+        public SbaPPPLoanForgiveness InvokeSbaLoanForgiveness(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
         {
-
             var serialized = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat });
 
             RestClient restClient = new RestClient($"{baseUri}/{loanForgivenessUrl}/");
@@ -51,7 +51,7 @@ namespace Claysys.PPP.Forgiveness.restclient
             restRequest.AddHeader(VENDOR_KEY, vendorKey);
             restRequest.AddHeader("Content-Type", "application/json");
             restRequest.AddParameter("application/json", serialized, ParameterType.RequestBody);
-            IRestResponse response = await restClient.ExecuteAsync(restRequest);
+            IRestResponse response = restClient.Execute(restRequest);
             double sbaNumber = Convert.ToDouble(request.etran_loan.sba_number);
             using (SqlConnection _sqlCon = new SqlConnection(Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.connectionString))
             {
@@ -77,7 +77,6 @@ namespace Claysys.PPP.Forgiveness.restclient
                     Utility.Utility.LogAction($"{sbaNumber}: Did not receive success code for SBA Number. please investigate. \nresponse code: {response.StatusCode}.\n response:{response.Content}");
                     return new SbaPPPLoanForgiveness();
                 }
-
                 _sqlCon.Close();
                 return sbaPPPLoanForgiveness;
             }
@@ -86,7 +85,7 @@ namespace Claysys.PPP.Forgiveness.restclient
 
 
 
-        public async Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl, string sbaNumber, string slugId = "")
+        public LoanDocumentResponse UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string loanDocumentsUrl, string sbaNumber, string slugId = "")
         {
 
             double sbanumber = Convert.ToDouble(sbaNumber);
@@ -101,7 +100,7 @@ namespace Claysys.PPP.Forgiveness.restclient
             restRequest.AddParameter("etran_loan", etran_loan);
             restRequest.AddFile("document", document, requestName);
 
-            IRestResponse response = await restClient.ExecuteAsync(restRequest);
+            IRestResponse response = restClient.Execute(restRequest);
             using (SqlConnection _sqlCon = new SqlConnection(Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.connectionString))
             {
                 LoanDocumentResponse loanDocument = null;
@@ -261,7 +260,35 @@ namespace Claysys.PPP.Forgiveness.restclient
             }
         }
 
-        public async Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
+
+        public async Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessPaymentBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests,string conString)
+        {
+            RestClient restClient = new RestClient($"{baseUri}/{ppp_loan_forgiveness_requests}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.GET);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            restRequest.AddParameter("sba_number", sbaNumber);
+            IRestResponse restResponse = restClient.Execute(restRequest);
+            
+            if (restResponse.IsSuccessful)
+            {
+                SbaPPPLoanForgivenessStatusResponse sbaLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPLoanForgivenessStatusResponse>(restResponse.Content);
+                var jObject = JObject.Parse(restResponse.Content);
+                if (sbaLoanForgiveness.results.Count > 0)
+                    Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.UpdateForgivenessPaymentDetails(sbaLoanForgiveness, conString);
+                return sbaLoanForgiveness;
+            }
+            else
+            {
+                Utility.Utility.LogAction($"{sbaNumber} : Did not receive success code for the Sba Number: {sbaNumber} in GetForgivenessPaymentBysbaNumber(). please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
+                return new SbaPPPLoanForgivenessStatusResponse();
+            }
+
+        }
+
+        public  SbaPPPLoanForgivenessStatusResponse GetForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
         {
             RestClient restClient = new RestClient($"{baseUri}/{ppp_loan_forgiveness_requests}/");
             restClient.Timeout = -1;
@@ -276,8 +303,8 @@ namespace Claysys.PPP.Forgiveness.restclient
             {
                 var jObject = JObject.Parse(restResponse.Content);
                 string status = Convert.ToInt32(((Newtonsoft.Json.Linq.JValue)jObject["count"]).Value) <= 0 ? "" : jObject["results"][0]["etran_loan"]["status"].ToString();
-                if (sbaLoanForgiveness.results.Count > 0)
-                    Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.UpdateForgivenessPaymentDetails(sbaLoanForgiveness);
+                //if (sbaLoanForgiveness.results.Count > 0)
+                //    Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.UpdateForgivenessPaymentDetails(sbaLoanForgiveness);
                 sbaLoanForgiveness.Status = string.IsNullOrEmpty(status) ? "Error" : status;
                 return sbaLoanForgiveness;
 
@@ -286,6 +313,35 @@ namespace Claysys.PPP.Forgiveness.restclient
             {
                 Utility.Utility.LogAction($"{sbaNumber} : Did not receive success code for the Sba Number: {sbaNumber} in getForgivenessRequestBysbaNumber(). please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
                 return new SbaPPPLoanForgivenessStatusResponse();
+            }
+
+        }
+
+        public SbaPPPDisbursedLoanForgivenessStatusResponse GetDisbursedLoanBySbaNumber(string sbaNumber, string ppp_loan_validations)
+        {
+            RestClient restClient = new RestClient($"{baseUri}/{ppp_loan_validations}/");
+            restClient.Timeout = -1;
+            RestRequest restRequest = new RestRequest(Method.GET);
+            restRequest.AddHeader("Authorization", apiToken);
+            restRequest.AddHeader(VENDOR_KEY, vendorKey);
+            restRequest.AddHeader("Content-Type", "application/json");
+            restRequest.AddParameter("sba_number", sbaNumber);
+            IRestResponse restResponse = restClient.Execute(restRequest);
+            SbaPPPDisbursedLoanForgivenessStatusResponse sbaLoanForgiveness = JsonConvert.DeserializeObject<SbaPPPDisbursedLoanForgivenessStatusResponse>(restResponse.Content);
+            if (restResponse.IsSuccessful)
+            {
+                var jObject = JObject.Parse(restResponse.Content);
+                //string status = Convert.ToInt32(((Newtonsoft.Json.Linq.JValue)jObject["count"]).Value) <= 0 ? "" : jObject["results"][0]["etran_loan"]["status"].ToString();
+                ////if (sbaLoanForgiveness.results.Count > 0)
+                //    Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.UpdateForgivenessPaymentDetails(sbaLoanForgiveness);
+               
+                return sbaLoanForgiveness;
+
+            }
+            else
+            {
+                Utility.Utility.LogAction($"{sbaNumber} : Did not receive success code for the Sba Number: {sbaNumber} in getForgivenessRequestBysbaNumber(). please investigate. received response: {Environment.NewLine}StatusCode - {restResponse.StatusCode}{Environment.NewLine}Response - {restResponse.Content}");
+                return new SbaPPPDisbursedLoanForgivenessStatusResponse();
             }
 
         }
@@ -323,7 +379,7 @@ namespace Claysys.PPP.Forgiveness.restclient
             }
         }
 
-        public async Task<SbaPPPLoanMessagesResponse> getForgivenessMessagesBySbaNumber(int page, string sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
+        public SbaPPPLoanMessagesResponse getForgivenessMessagesBySbaNumber(int page, string sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
         {
 
 
@@ -343,7 +399,7 @@ namespace Claysys.PPP.Forgiveness.restclient
             restRequest.AddParameter("page", page);
             restRequest.AddParameter("isComplete", isComplete);
             restRequest.AddHeader("Content-Type", "application/json");
-            IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+            IRestResponse restResponse = restClient.Execute(restRequest);
 
             using (SqlConnection _sqlCon = new SqlConnection(Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.connectionString))
             {
@@ -356,15 +412,23 @@ namespace Claysys.PPP.Forgiveness.restclient
                 {
                     SqlCommand sql_cmnd = new SqlCommand(_messageProcName, _sqlCon);
                     var jObject = JObject.Parse(restResponse.Content);
-                    string subject = jObject["slug"]?.ToString();
-                    string ticket = jObject["name"]?.ToString();
-                    string message = jObject["created_at"]?.ToString();
-                    Boolean isCompleted = Convert.ToBoolean(jObject["updated_at"]);
-
-                    Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.ForgivenessMessage(sql_cmnd, sbaNumber, subject, ticket, message, isCompleted);
-                    Utility.Utility.LogAction("Forgiveness Message Procedure executed successfully");
-
                     loanMessagesResponse = JsonConvert.DeserializeObject<SbaPPPLoanMessagesResponse>(restResponse.Content);
+                    if (loanMessagesResponse.results.Count > 0)
+                    { 
+                        //string subject = jObject["slug"]?.ToString();
+                        string subject = jObject["results"][0]["subject"]?.ToString();
+                        string ticket = jObject["results"][0]["ticket"]?.ToString();
+                        string message = jObject["results"][0]["messages"][0]["content"]?.ToString().Replace("<a href=", string.Empty).Replace("</a>", string.Empty);
+                        Boolean isCompleted = Convert.ToBoolean(jObject["results"][0]["is_complete"]);
+                        //string pattern = @"<(.|\n)*?>";
+                        string pattern = "<.*?>";
+
+                        string Result = Regex.Replace(message, pattern, "\n");
+
+                        Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.ForgivenessMessage(sql_cmnd, sbaNumber, subject, ticket, Result.Replace(">", Environment.NewLine), isCompleted);
+                        Utility.Utility.LogAction("Forgiveness Message Procedure executed successfully");
+                    }
+                    
 
                 }
                 else
@@ -385,7 +449,7 @@ namespace Claysys.PPP.Forgiveness.restclient
         }
 
 
-        public async Task<bool> DeleteSbaLoanForgiveness(string slug, string sbaNumber, string loanForgivenessUrl)
+        public  bool DeleteSbaLoanForgiveness(string slug, string sbaNumber, string loanForgivenessUrl)
         {
 
             double sbanumber = Convert.ToDouble(sbaNumber);
@@ -401,7 +465,7 @@ namespace Claysys.PPP.Forgiveness.restclient
             restRequest.AddHeader("Authorization", apiToken);
             restRequest.AddHeader(VENDOR_KEY, vendorKey);
             restRequest.AddHeader("Content-Type", "application/json");
-            IRestResponse restResponse = await restClient.ExecuteAsync(restRequest);
+            IRestResponse restResponse = restClient.Execute(restRequest);
 
             using (SqlConnection _sqlCon = new SqlConnection(Claysys.PPP.Forgiveness.PPPForgiveness.dataManagementObj.connectionString))
             {

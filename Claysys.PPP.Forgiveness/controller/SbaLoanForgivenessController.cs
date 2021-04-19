@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Claysys.PPP.Forgiveness.domain;
 using Claysys.PPP.Forgiveness.service;
+using Newtonsoft.Json;
 
 namespace Claysys.PPP.Forgiveness.controller
 {
@@ -14,10 +15,10 @@ namespace Claysys.PPP.Forgiveness.controller
             this.sbaLoanForgivenessService = sbaLoanForgivenessService;
         }
 
-        public Task<SbaPPPLoanForgiveness> Execute(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
+        public SbaPPPLoanForgiveness Execute(SbaPPPLoanForgiveness request, string loanForgivenessUrl)
         {
             Utility.Utility.LogAction($"Submit Request Received in SBALoanForgivenessController : {request.etran_loan.sba_number}");
-            Task<SbaPPPLoanForgiveness> response = sbaLoanForgivenessService.Execute(request, loanForgivenessUrl);
+            SbaPPPLoanForgiveness response = sbaLoanForgivenessService.Execute(request, loanForgivenessUrl);
             return response;
         }
 
@@ -42,10 +43,24 @@ namespace Claysys.PPP.Forgiveness.controller
             return response;
         }
 
-        public Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
+        public SbaPPPLoanForgivenessStatusResponse GetForgivenessRequestBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests)
         {
             Utility.Utility.LogAction($"{sbaNumber} :Get Request Received in SbaLoanForgivenessController.");
-            Task<SbaPPPLoanForgivenessStatusResponse> response = sbaLoanForgivenessService.GetForgivenessRequestBysbaNumber(sbaNumber, ppp_loan_forgiveness_requests);
+            SbaPPPLoanForgivenessStatusResponse response = sbaLoanForgivenessService.GetForgivenessRequestBysbaNumber(sbaNumber, ppp_loan_forgiveness_requests);
+            return response;
+        }
+
+        public Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessPaymentBysbaNumber(string sbaNumber, string ppp_loan_forgiveness_requests,string conString)
+        {
+            Utility.Utility.LogAction($"{sbaNumber} :Get Request Received in SbaLoanForgivenessController.");
+            Task<SbaPPPLoanForgivenessStatusResponse> response = sbaLoanForgivenessService.GetForgivenessPaymentBysbaNumber(sbaNumber, ppp_loan_forgiveness_requests, conString);
+            return response;
+        }
+
+        public SbaPPPDisbursedLoanForgivenessStatusResponse GetDisbursedLoanBySbaNumber(string sbaNumber, string ppp_loan_validations)
+        {
+            Utility.Utility.LogAction($"{sbaNumber} :Get Request Received in SbaLoanForgivenessController.");
+            SbaPPPDisbursedLoanForgivenessStatusResponse response = sbaLoanForgivenessService.GetDisbursedLoanBySbaNumber(sbaNumber, ppp_loan_validations);
             return response;
         }
 
@@ -56,10 +71,10 @@ namespace Claysys.PPP.Forgiveness.controller
             return response;
         }
 
-        public async Task<bool> DeleteSbaLoanForgiveness(string slug,string sbaNumber, string loanForgivenessUrl)
+        public bool DeleteSbaLoanForgiveness(string slug,string sbaNumber, string loanForgivenessUrl)
         {
             Utility.Utility.LogAction($"{sbaNumber} : Delete Request Received in SbaLoanForgivenessController.");
-            return await sbaLoanForgivenessService.DeleteSbaLoanForgiveness(slug,sbaNumber, loanForgivenessUrl);
+            return sbaLoanForgivenessService.DeleteSbaLoanForgiveness(slug,sbaNumber, loanForgivenessUrl);
         }
 
 

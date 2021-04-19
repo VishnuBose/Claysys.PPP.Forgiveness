@@ -81,6 +81,24 @@ CREATE TABLE [dbo].[ForgivenessMessage](
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
+/****** Object:  Table [dbo].[ForgivenessSBADocument]    Script Date: 12/17/2020 1:12:10 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[ForgivenessSBADocument](
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
+	[SBALoanNo] [nvarchar](50) NULL,
+	[Url] [nvarchar](max) NULL,
+	[Document] [nvarchar](max) NULL,
+	[LoanApplicationNumber] [varchar](50) NULL,
+	[Status] [nvarchar](50) NULL,
+	[FileName] [nvarchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
 
 
 
@@ -245,7 +263,7 @@ BEGIN
 			,SA.EmployeesAtApplicationTime
 			,NULL AS CFLine5
 			,NULL AS CFLine7
-			,NULL AS CFLine8
+			,SA.ForgivenessAmount AS CFLine8
 			,SA.EmployeesAtForgivenessTime
 			,NULL AS ForgiveModifiedTotal
 			,NULL AS ForgiveScheduleALine1
@@ -957,4 +975,47 @@ BEGIN
 	END
 END
 GO
+
+
+/****** Object:  StoredProcedure [dbo].[spi_ForgivenessSBAGeneratedDoc]    Script Date: 12/17/2020 1:05:01 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+CREATE PROCEDURE [dbo].[spi_ForgivenessSBAGeneratedDoc] (
+	@sbaloanno NVARCHAR(50)
+	,@url NVARCHAR(max)
+	,@document NVARCHAR(max)
+	)
+AS
+BEGIN
+
+	IF NOT EXISTS (SELECT * FROM [dbo].[ForgivenessSBADocument] WHERE SBALoanNo = @sbaloanno)
+    Begin
+
+	DECLARE @LoanApplicationNumber bigint
+	set @LoanApplicationNumber = (select LoanApplicationNumber from ForgivenessApplication FA  inner join PPP_Loan_Forgiveness PLF on ((substring(FA.SBALoanNo,1,8)+'-'+substring(FA.SBALoanNo,9,2)) = PLF.SBALoanNumber) where FA.SBALoanNo = @sbaloanno )
+
+	INSERT INTO [dbo].[ForgivenessSBADocument] (
+		[SBALoanNo]
+		,[Url]
+		,[Document]
+		,[LoanApplicationNumber]
+		)
+	VALUES (
+		@sbaloanno
+		,@url
+		,@document
+		,@LoanApplicationNumber
+		)
+		End
+END
+
+GO
+
+
 

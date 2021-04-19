@@ -24,7 +24,7 @@ namespace Claysys.PPP.Forgiveness.controller
             return sbaLoanForgivenessMessageService.updateSbaLoanMessageReply(request, loanForgivenessMessageUrl);
         }
 
-        public Task<SbaPPPLoanMessagesResponse> getForgivenessMessagesBySbaNumber(int page, String sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
+        public SbaPPPLoanMessagesResponse getForgivenessMessagesBySbaNumber(int page, String sbaNumber, bool isComplete, string loanForgivenessMessageUrl)
         {
             Console.WriteLine("Retreiving LoanForgiveness Request Messages by SBA Number");
             return sbaLoanForgivenessMessageService.getForgivenessMessagesBySbaNumber(page, sbaNumber, isComplete, loanForgivenessMessageUrl);

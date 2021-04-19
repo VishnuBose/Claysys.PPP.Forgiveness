@@ -96,13 +96,13 @@ namespace Claysys.PPP.Forgiveness.domain
 
 		public string forgive_covered_period_to { get; set; }
 
-		public string forgive_alternate_covered_period_from { get; set; }
+		//public string forgive_alternate_covered_period_from { get; set; }
 
-		public string forgive_alternate_covered_period_to { get; set; }
+		//public string forgive_alternate_covered_period_to { get; set; }
 
 		public bool? forgive_2_million { get; set; }
 
-		public string forgive_payroll_schedule { get; set; }
+		//public string forgive_payroll_schedule { get; set; }
 
 		public int forgive_lender_decision { get; set; }
 
@@ -138,6 +138,24 @@ namespace Claysys.PPP.Forgiveness.domain
 
 
 		public Organization organization { get; set; }
+
+		public string forgive_covered_protection_expenditures { get; set; }
+		public string forgive_covered_supplier_costs { get; set; }
+		public string forgive_covered_property_damage_costs { get; set; }
+		public string forgive_covered_operations_expenditures { get; set; }
+		public int ppp_loan_draw { get; set; }
+		public string naics_code { get; set; }
+
+	}
+
+	public class EidLDetails
+	{ 
+		//"":"[{\"applicationnmb\":3601351708,\"processdt\":\"08/10/2020\",\"transactionamt\":100}]"
+		public string applicationnmb { get; set; }
+
+		public DateTime? processdt { get; set; }
+
+		public string transactionamt { get; set; }
 
 	}
 }

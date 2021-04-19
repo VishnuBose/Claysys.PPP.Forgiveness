@@ -41,10 +41,24 @@ namespace Claysys.PPP.Forgiveness.Methods
             return sbaLoanForgivenessBySlug;
         }
 
-        public static async Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessRequestBySbaNumber(string sbaNumber, SbaLoanForgivenessController sbaLoanForgiveness)
+        public static SbaPPPLoanForgivenessStatusResponse GetForgivenessRequestBySbaNumber(string sbaNumber, SbaLoanForgivenessController sbaLoanForgiveness)
         {
             SbaPPPLoanForgivenessStatusResponse loanForgivenessStatusResponse =
-                await sbaLoanForgiveness.GetForgivenessRequestBysbaNumber(sbaNumber, "ppp_loan_forgiveness_requests");
+                sbaLoanForgiveness.GetForgivenessRequestBysbaNumber(sbaNumber, "ppp_loan_forgiveness_requests");
+            return loanForgivenessStatusResponse;
+        }
+
+        public static async Task<SbaPPPLoanForgivenessStatusResponse> GetForgivenessPaymentBySbaNumber(string sbaNumber, SbaLoanForgivenessController sbaLoanForgiveness, string conString)
+        {
+            SbaPPPLoanForgivenessStatusResponse loanForgivenessStatusResponse =
+                await sbaLoanForgiveness.GetForgivenessPaymentBysbaNumber(sbaNumber, "ppp_loan_forgiveness_requests", conString);
+            return loanForgivenessStatusResponse;
+        }
+
+        public static SbaPPPDisbursedLoanForgivenessStatusResponse GetDisbursedLoanBySbaNumber(string sbaNumber, SbaLoanForgivenessController sbaLoanForgiveness)
+        {
+            SbaPPPDisbursedLoanForgivenessStatusResponse loanForgivenessStatusResponse =
+               sbaLoanForgiveness.GetDisbursedLoanBySbaNumber(sbaNumber, "ppp_loan_validations");
             return loanForgivenessStatusResponse;
         }
 
@@ -55,21 +69,21 @@ namespace Claysys.PPP.Forgiveness.Methods
             return loanDocumentType;
         }
 
-        public static async Task<SbaPPPLoanMessagesResponse> getForgivenessMessagesBySbaNumber(SbaLoanForgivenessMessageController sbaLoanForgivenessMessageControllers, int page, String sbaNumber, bool isComplete)
+        public static SbaPPPLoanMessagesResponse getForgivenessMessagesBySbaNumber(SbaLoanForgivenessMessageController sbaLoanForgivenessMessageControllers, int page, String sbaNumber, bool isComplete)
         {
             SbaPPPLoanMessagesResponse sbaPppLoanMessagesResponse =
-                await sbaLoanForgivenessMessageControllers.getForgivenessMessagesBySbaNumber(page, sbaNumber, isComplete,
+                sbaLoanForgivenessMessageControllers.getForgivenessMessagesBySbaNumber(page, sbaNumber, isComplete,
                     "ppp_loan_forgiveness_messages");
             return sbaPppLoanMessagesResponse;
         }
 
 
-        public static async Task<bool> DeleteSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, string slug, string sbaNumber)
+        public static bool DeleteSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, string slug, string sbaNumber)
         {
-            return await sbaLoanForgiveness.DeleteSbaLoanForgiveness(slug, sbaNumber, "ppp_loan_forgiveness_requests"); 
+            return sbaLoanForgiveness.DeleteSbaLoanForgiveness(slug, sbaNumber, "ppp_loan_forgiveness_requests"); 
         }
 
-        public static async Task<SbaPPPLoanForgiveness> InvokeSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, SbaForgiveness sbaForgivenessobj)
+        public static SbaPPPLoanForgiveness InvokeSbaLoanForgiveness(SbaLoanForgivenessController sbaLoanForgiveness, SbaForgiveness sbaForgivenessobj)
         {
             SbaPPPLoanForgiveness pppLoanForgiveness;
             if (sbaForgivenessobj.s_form)
@@ -86,8 +100,9 @@ namespace Claysys.PPP.Forgiveness.Methods
                         entity_name = sbaForgivenessobj.Entity_Name,
                         ein = Convert.ToString(sbaForgivenessobj.einSsn),
                         funding_date = Convert.ToString(sbaForgivenessobj.fundingDate),
-                        forgive_eidl_amount = Convert.ToDouble(sbaForgivenessobj.forgive_eidl_amount),
-                        forgive_eidl_application_number = sbaForgivenessobj.forgive_eidl_application_number,
+                        //forgive_eidl_amount = Convert.ToDouble(sbaForgivenessobj.forgive_eidl_amount),
+                        //forgive_eidl_application_number = sbaForgivenessobj.forgive_eidl_application_number,
+                        forgive_payroll = Convert.ToDouble(sbaForgivenessobj.forgive_payroll),
                         address1 = sbaForgivenessobj.address1,
                         address2 = sbaForgivenessobj.address2,
                         dba_name = sbaForgivenessobj.dba_name,
@@ -95,13 +110,18 @@ namespace Claysys.PPP.Forgiveness.Methods
                         forgive_fte_at_loan_application = sbaForgivenessobj.forgive_fte_at_loan_application,
                         forgive_amount = Convert.ToDouble(sbaForgivenessobj.forgive_amount),
                         forgive_fte_at_forgiveness_application = Convert.ToInt32(sbaForgivenessobj.forgive_fte_at_forgiveness_application),
+                        forgive_covered_period_from = sbaForgivenessobj.forgive_covered_period_from,
+                        forgive_covered_period_to = sbaForgivenessobj.forgive_covered_period_to,
                         forgive_lender_decision = sbaForgivenessobj.forgive_lender_decision,
                         primary_email = sbaForgivenessobj.primary_email,
                         primary_name = sbaForgivenessobj.primary_name,
                         ez_form = false,
                         s_form = true,
                         forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation,
-                        forgive_2_million = false
+                        //forgive_2_million = false
+                        forgive_2_million = sbaForgivenessobj.forgive_2_million,
+                        naics_code = sbaForgivenessobj.naics_code,
+                        ppp_loan_draw = sbaForgivenessobj.ppp_loan_draw,
                     },
                 };
             }
@@ -119,8 +139,8 @@ namespace Claysys.PPP.Forgiveness.Methods
                         entity_name = sbaForgivenessobj.Entity_Name,
                         ein = Convert.ToString(sbaForgivenessobj.einSsn),
                         funding_date = Convert.ToString(sbaForgivenessobj.fundingDate),
-                        forgive_eidl_amount = Convert.ToDouble(sbaForgivenessobj.forgive_eidl_amount),
-                        forgive_eidl_application_number = sbaForgivenessobj.forgive_eidl_application_number,
+                        //forgive_eidl_amount = Convert.ToDouble(sbaForgivenessobj.forgive_eidl_amount),
+                        //forgive_eidl_application_number = sbaForgivenessobj.forgive_eidl_application_number,
                         forgive_payroll = Convert.ToDouble(sbaForgivenessobj.forgive_payroll), 
                         forgive_rent = Convert.ToDouble(sbaForgivenessobj.forgive_rent),
                         forgive_utilities = Convert.ToDouble(sbaForgivenessobj.forgive_utilities), 
@@ -136,16 +156,25 @@ namespace Claysys.PPP.Forgiveness.Methods
                         forgive_fte_at_forgiveness_application = Convert.ToInt32(sbaForgivenessobj.forgive_fte_at_forgiveness_application), 
                         forgive_covered_period_from = sbaForgivenessobj.forgive_covered_period_from, 
                         forgive_covered_period_to = sbaForgivenessobj.forgive_covered_period_to, 
-                        forgive_alternate_covered_period_from = sbaForgivenessobj.forgive_alternate_covered_period_from, 
-                        forgive_alternate_covered_period_to = sbaForgivenessobj.forgive_alternate_covered_period_to, 
+                        //forgive_alternate_covered_period_from = sbaForgivenessobj.forgive_alternate_covered_period_from, 
+                        //forgive_alternate_covered_period_to = sbaForgivenessobj.forgive_alternate_covered_period_to, 
                         forgive_2_million = sbaForgivenessobj.forgive_2_million, 
-                        forgive_payroll_schedule = sbaForgivenessobj.forgive_payroll_schedule, 
+                        //forgive_payroll_schedule = sbaForgivenessobj.forgive_payroll_schedule, 
                         forgive_lender_decision = sbaForgivenessobj.forgive_lender_decision, 
                         primary_email = sbaForgivenessobj.primary_email, 
                         primary_name = sbaForgivenessobj.primary_name, 
-                        ez_form = sbaForgivenessobj.ez_form, 
+                        ez_form = sbaForgivenessobj.ez_form,
 
-                        forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation 
+                        naics_code = sbaForgivenessobj.naics_code,
+                        ppp_loan_draw = sbaForgivenessobj.ppp_loan_draw,
+                        forgive_covered_operations_expenditures = sbaForgivenessobj.forgive_covered_operations_expenditures,
+                        forgive_covered_property_damage_costs = sbaForgivenessobj.forgive_covered_property_damage_costs,
+                        forgive_covered_supplier_costs = sbaForgivenessobj.forgive_covered_supplier_costs,
+                        forgive_covered_protection_expenditures = sbaForgivenessobj.forgive_covered_protection_expenditures,
+
+                        forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation
+                        
+
                     },
                     
                 };
@@ -164,8 +193,8 @@ namespace Claysys.PPP.Forgiveness.Methods
                         entity_name = sbaForgivenessobj.Entity_Name,
                         ein = Convert.ToString(sbaForgivenessobj.einSsn),
                         funding_date = Convert.ToString(sbaForgivenessobj.fundingDate),
-                        forgive_eidl_amount = Convert.ToDouble(sbaForgivenessobj.forgive_eidl_amount),
-                        forgive_eidl_application_number = sbaForgivenessobj.forgive_eidl_application_number,
+                        //forgive_eidl_amount = Convert.ToDouble(sbaForgivenessobj.forgive_eidl_amount),
+                        //forgive_eidl_application_number = sbaForgivenessobj.forgive_eidl_application_number,
                         forgive_payroll = Convert.ToDouble(sbaForgivenessobj.forgive_payroll), 
                         forgive_rent = Convert.ToDouble(sbaForgivenessobj.forgive_rent), 
                         forgive_utilities = Convert.ToDouble(sbaForgivenessobj.forgive_utilities), 
@@ -203,14 +232,21 @@ namespace Claysys.PPP.Forgiveness.Methods
 
                         forgive_covered_period_from = sbaForgivenessobj.forgive_covered_period_from, 
                         forgive_covered_period_to = sbaForgivenessobj.forgive_covered_period_to, 
-                        forgive_alternate_covered_period_from = sbaForgivenessobj.forgive_alternate_covered_period_from, 
-                        forgive_alternate_covered_period_to = sbaForgivenessobj.forgive_alternate_covered_period_to, 
+                        //forgive_alternate_covered_period_from = sbaForgivenessobj.forgive_alternate_covered_period_from, 
+                        //forgive_alternate_covered_period_to = sbaForgivenessobj.forgive_alternate_covered_period_to, 
                         forgive_2_million = sbaForgivenessobj.forgive_2_million, 
-                        forgive_payroll_schedule = sbaForgivenessobj.forgive_payroll_schedule, 
+                        //forgive_payroll_schedule = sbaForgivenessobj.forgive_payroll_schedule, 
                         forgive_lender_decision = sbaForgivenessobj.forgive_lender_decision, 
                         primary_email = sbaForgivenessobj.primary_email, 
                         primary_name = sbaForgivenessobj.primary_name, 
-                        ez_form = sbaForgivenessobj.ez_form, 
+                        ez_form = sbaForgivenessobj.ez_form,
+
+                        naics_code = sbaForgivenessobj.naics_code,
+                        ppp_loan_draw = sbaForgivenessobj.ppp_loan_draw,
+                        forgive_covered_operations_expenditures = sbaForgivenessobj.forgive_covered_operations_expenditures,
+                        forgive_covered_property_damage_costs = sbaForgivenessobj.forgive_covered_property_damage_costs,
+                        forgive_covered_supplier_costs = sbaForgivenessobj.forgive_covered_supplier_costs,
+                        forgive_covered_protection_expenditures = sbaForgivenessobj.forgive_covered_protection_expenditures,
 
                         forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation 
                     },
@@ -218,7 +254,7 @@ namespace Claysys.PPP.Forgiveness.Methods
                 };
             }
             SbaPPPLoanForgiveness sbaPppLoanForgiveness =
-                await sbaLoanForgiveness.Execute(pppLoanForgiveness, "ppp_loan_forgiveness_requests");
+                sbaLoanForgiveness.Execute(pppLoanForgiveness, "ppp_loan_forgiveness_requests");
             if (sbaPppLoanForgiveness != null)
             {
                 var serialized = JsonConvert.SerializeObject(sbaPppLoanForgiveness,
@@ -233,9 +269,9 @@ namespace Claysys.PPP.Forgiveness.Methods
             return new SbaPPPLoanForgiveness();
         }
 
-        public static async Task UploadForgivenessDocument(SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber, string slugId)
+        public static void UploadForgivenessDocument(SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber, string slugId)
         {
-            LoanDocumentResponse response = await UploadForgivenessDocument(sbaLoanDocuments.DocumentName, sbaLoanDocuments.documentType, sbaLoanDocuments.etranId, sbaLoanDocuments.rawDocument
+            LoanDocumentResponse response = UploadForgivenessDocument(sbaLoanDocuments.DocumentName, sbaLoanDocuments.documentType, sbaLoanDocuments.etranId, sbaLoanDocuments.rawDocument
           , "ppp_loan_documents", sbaLoanDocuments, sbaNumber, slugId);
 
             string serialized = JsonConvert.SerializeObject(response,
@@ -243,10 +279,10 @@ namespace Claysys.PPP.Forgiveness.Methods
 
         }
 
-        public static async Task<LoanDocumentResponse> UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string apiMethod, SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber,string slugId)
+        public static  LoanDocumentResponse UploadForgivenessDocument(string requestName, string requestDocument_type, string etran_loan, byte[] document, string apiMethod, SbaLoanDocumentsController sbaLoanDocuments, string sbaNumber,string slugId)
         {
 
-            LoanDocumentResponse loanDocument = await sbaLoanDocuments.UploadForgivenessDocument(requestName,
+            LoanDocumentResponse loanDocument = sbaLoanDocuments.UploadForgivenessDocument(requestName,
                     requestDocument_type, etran_loan, document, apiMethod, sbaNumber, slugId);
             return loanDocument;
         }
