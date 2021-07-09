@@ -126,10 +126,10 @@ namespace Claysys.PPP.Forgiveness
                 sbaLoanForgivenessMessageControllers = new SbaLoanForgivenessMessageController(new SbaLoanForgivenessMessageService(new SbaRestApiClient(baseUri, apiToken, vendorKey)));
 
                 Utility.Utility.LogAction("CU - " + cuData.CUName + " Connection open for updation.");
-                GetApplicationStatus();
-                ForgivessPaymentUpdate(cuData.ConnectionString);
-                SBAGeneratedDocuments(); // Only for CACU
-                GetMessageFromSBAAsync();
+                //GetApplicationStatus();
+                //ForgivessPaymentUpdate(cuData.ConnectionString);
+                //SBAGeneratedDocuments(); // Only for CACU
+                //GetMessageFromSBAAsync();
 
                 ManageForgivenessData();
             });
@@ -211,15 +211,15 @@ namespace Claysys.PPP.Forgiveness
                 forgivenessDetails.ForEach(forgivenessItem =>
                  {
                      string applicationStatus = forgivenessItem.ApplicationStatus;
-                     string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);
+                     string sbanumber = Convert.ToString(forgivenessItem.SbaLoanNumber);//9833037205, "1456017305";1456071305
                      SbaPPPLoanForgivenessStatusResponse sbaObj = Methods.Methods.GetForgivenessRequestBySbaNumber(sbanumber, sbaLoanForgiveness);
                      string status = sbaObj.Status;
                      string slugId = string.Empty;
                      if (sbaObj.results.Count > 0 && !String.IsNullOrEmpty(sbaObj.results[0].slug))
                      {
                          slugId = sbaObj.results[0].slug;
-                     //UpdateFogivenessDocument(sbaObj.results[0]).Wait();
-                 }
+                         /*UpdateFogivenessDocument(sbaObj.results[0]); *///Only when document need to reuoload
+                     }
                      if (applicationStatus != status)
                      {
                          dataManagementObj.UpdateForgivenessDb(sbanumber, status, slugId);
@@ -647,215 +647,215 @@ namespace Claysys.PPP.Forgiveness
         }
 
 
-        private static async Task UpdateFogivenessDocument(SbaPPPLoanForgiveness sbaForgivenessObj)
+        private void  UpdateFogivenessDocument(SbaPPPLoanForgiveness sbaForgivenessObj)
         {
             if (!string.IsNullOrEmpty(sbaForgivenessObj.slug))
             {
                 pppSlug = sbaForgivenessObj.slug;
                 pppSbaNumber = sbaForgivenessObj.etran_loan.sba_number;
 
-                if (sbaForgivenessObj.etran_loan.ez_form)
-                {
-                    var documentDetail = dataManagementObj.GetForgivenessDocumentsEZ(pppSbaNumber);
+                //if (sbaForgivenessObj.etran_loan.ez_form)
+                //{
+                //    var documentDetail = dataManagementObj.GetForgivenessDocumentsEZ(pppSbaNumber);
 
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollAName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollAName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.PayrollAName;
-                        sbaLoanDocuments.documentType = "23";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.PayrollAFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollBName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollBName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.PayrollBName;
-                        sbaLoanDocuments.documentType = "23";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.PayrollBFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollCName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollCName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.PayrollCName;
-                        sbaLoanDocuments.documentType = "23";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.PayrollCFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollDName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollDName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.PayrollDName;
-                        sbaLoanDocuments.documentType = "23";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.PayrollDFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.NonPayrollCName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollCName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.NonPayrollCName;
-                        sbaLoanDocuments.documentType = "20";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.NonPayrollCFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.NonPayrollBName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollBName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.NonPayrollBName;
-                        sbaLoanDocuments.documentType = "21";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.NonPayrollBFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.CertifySalaryName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CertifySalaryName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.CertifySalaryName;
-                        sbaLoanDocuments.documentType = "16";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.CertifySalaryFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.EmployeeJobName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.EmployeeJobName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.EmployeeJobName;
-                        sbaLoanDocuments.documentType = "15";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.EmployeeJobFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.CompanyOpsName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CompanyOpsName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.CompanyOpsName;
-                        sbaLoanDocuments.documentType = "13";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.CompanyOpsFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.NonPayrollAName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollAName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.NonPayrollAName;
-                        sbaLoanDocuments.documentType = "8";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.NonPayrollAFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                }
-                else
-                {
+                //    if (!string.IsNullOrEmpty(documentDetail.PayrollAName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollAName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.PayrollAName;
+                //        sbaLoanDocuments.documentType = "23";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.PayrollAFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.PayrollBName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollBName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.PayrollBName;
+                //        sbaLoanDocuments.documentType = "23";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.PayrollBFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.PayrollCName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollCName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.PayrollCName;
+                //        sbaLoanDocuments.documentType = "23";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.PayrollCFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.PayrollDName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollDName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.PayrollDName;
+                //        sbaLoanDocuments.documentType = "23";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.PayrollDFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.NonPayrollCName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollCName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.NonPayrollCName;
+                //        sbaLoanDocuments.documentType = "20";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.NonPayrollCFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.NonPayrollBName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollBName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.NonPayrollBName;
+                //        sbaLoanDocuments.documentType = "21";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.NonPayrollBFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.CertifySalaryName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CertifySalaryName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.CertifySalaryName;
+                //        sbaLoanDocuments.documentType = "16";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.CertifySalaryFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.EmployeeJobName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.EmployeeJobName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.EmployeeJobName;
+                //        sbaLoanDocuments.documentType = "15";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.EmployeeJobFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.CompanyOpsName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CompanyOpsName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.CompanyOpsName;
+                //        sbaLoanDocuments.documentType = "13";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.CompanyOpsFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.NonPayrollAName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonPayrollAName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.NonPayrollAName;
+                //        sbaLoanDocuments.documentType = "8";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.NonPayrollAFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //}
+                //else
+                //{
 
-                    var documentDetail = dataManagementObj.GetForgivenessDocumentsFullApp(pppSbaNumber);
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollCompensationName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollCompensationName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.PayrollCompensationName;
-                        sbaLoanDocuments.documentType = "23";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.PayrollCompensationFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollTaxFormName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollTaxFormName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.PayrollTaxFormName;
-                        sbaLoanDocuments.documentType = "23";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.PayrollTaxFormFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.PayrollPayementsName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollPayementsName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.PayrollPayementsName;
-                        sbaLoanDocuments.documentType = "23";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.PayrollPayementsFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName1) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.FTEDocumentationName1;
-                        sbaLoanDocuments.documentType = "22";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile1;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName2) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.FTEDocumentationName2;
-                        sbaLoanDocuments.documentType = "22";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile2;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName3) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.FTEDocumentationName3;
-                        sbaLoanDocuments.documentType = "22";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile3;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.NonpayrollName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName1) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.NonpayrollName1;
-                        sbaLoanDocuments.documentType = "8";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile1;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.NonpayrollName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName2) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.NonpayrollName2;
-                        sbaLoanDocuments.documentType = "21";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile2;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.NonpayrollName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName3) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.NonpayrollName3;
-                        sbaLoanDocuments.documentType = "20";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile3;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName1) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName1;
-                        sbaLoanDocuments.documentType = "12";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile1;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName2) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName2;
-                        sbaLoanDocuments.documentType = "11";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile2;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName3) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName3;
-                        sbaLoanDocuments.documentType = "15";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile3;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName4) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName4) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName4;
-                        sbaLoanDocuments.documentType = "10";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile4;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                    if (!string.IsNullOrEmpty(documentDetail.CustomerSafteyFileName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CustomerSafteyFileName) <= 0)
-                    {
-                        sbaLoanDocuments.DocumentName = documentDetail.CustomerSafteyFileName;
-                        sbaLoanDocuments.documentType = "13";
-                        sbaLoanDocuments.etranId = pppSlug;
-                        sbaLoanDocuments.rawDocument = documentDetail.CustomerSafteyFile;
-                        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
-                    }
-                }
+                //    var documentDetail = dataManagementObj.GetForgivenessDocumentsFullApp(pppSbaNumber);
+                //    if (!string.IsNullOrEmpty(documentDetail.PayrollCompensationName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollCompensationName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.PayrollCompensationName;
+                //        sbaLoanDocuments.documentType = "23";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.PayrollCompensationFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.PayrollTaxFormName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollTaxFormName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.PayrollTaxFormName;
+                //        sbaLoanDocuments.documentType = "23";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.PayrollTaxFormFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.PayrollPayementsName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.PayrollPayementsName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.PayrollPayementsName;
+                //        sbaLoanDocuments.documentType = "23";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.PayrollPayementsFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName1) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.FTEDocumentationName1;
+                //        sbaLoanDocuments.documentType = "22";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile1;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName2) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.FTEDocumentationName2;
+                //        sbaLoanDocuments.documentType = "22";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile2;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.FTEDocumentationName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.FTEDocumentationName3) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.FTEDocumentationName3;
+                //        sbaLoanDocuments.documentType = "22";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.FTEDocumentFile3;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.NonpayrollName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName1) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.NonpayrollName1;
+                //        sbaLoanDocuments.documentType = "8";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile1;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.NonpayrollName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName2) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.NonpayrollName2;
+                //        sbaLoanDocuments.documentType = "21";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile2;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.NonpayrollName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.NonpayrollName3) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.NonpayrollName3;
+                //        sbaLoanDocuments.documentType = "20";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.NonpayrollFile3;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName1) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName1) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName1;
+                //        sbaLoanDocuments.documentType = "12";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile1;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName2) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName2) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName2;
+                //        sbaLoanDocuments.documentType = "11";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile2;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName3) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName3) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName3;
+                //        sbaLoanDocuments.documentType = "15";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile3;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.AdditionalDocumentName4) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.AdditionalDocumentName4) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.AdditionalDocumentName4;
+                //        sbaLoanDocuments.documentType = "10";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.AdditionalDocumentFile4;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //    if (!string.IsNullOrEmpty(documentDetail.CustomerSafteyFileName) && dataManagementObj.GetForgivenessDocumentsCount(pppSbaNumber, documentDetail.CustomerSafteyFileName) <= 0)
+                //    {
+                //        sbaLoanDocuments.DocumentName = documentDetail.CustomerSafteyFileName;
+                //        sbaLoanDocuments.documentType = "13";
+                //        sbaLoanDocuments.etranId = pppSlug;
+                //        sbaLoanDocuments.rawDocument = documentDetail.CustomerSafteyFile;
+                //        Methods.Methods.UploadForgivenessDocument(sbaLoanDocuments, pppSbaNumber, pppSlug);
+                //    }
+                //}
 
                 foreach (var documentDetail in dataManagementObj.GetAdditionalDocuments(pppSbaNumber))
                 {

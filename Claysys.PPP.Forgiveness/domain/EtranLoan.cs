@@ -144,7 +144,7 @@ namespace Claysys.PPP.Forgiveness.domain
 		public string forgive_covered_property_damage_costs { get; set; }
 		public string forgive_covered_operations_expenditures { get; set; }
 		public int ppp_loan_draw { get; set; }
-		public string naics_code { get; set; }
+		public long? naics_code { get; set; }
 
 	}
 

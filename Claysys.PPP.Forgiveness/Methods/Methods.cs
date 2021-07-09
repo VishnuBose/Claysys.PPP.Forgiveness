@@ -120,7 +120,7 @@ namespace Claysys.PPP.Forgiveness.Methods
                         forgive_lender_confirmation = sbaForgivenessobj.forgive_lender_confirmation,
                         //forgive_2_million = false
                         forgive_2_million = sbaForgivenessobj.forgive_2_million,
-                        naics_code = sbaForgivenessobj.naics_code,
+                        naics_code = Convert.ToInt32(sbaForgivenessobj.naics_code),
                         ppp_loan_draw = sbaForgivenessobj.ppp_loan_draw,
                     },
                 };
@@ -165,7 +165,7 @@ namespace Claysys.PPP.Forgiveness.Methods
                         primary_name = sbaForgivenessobj.primary_name, 
                         ez_form = sbaForgivenessobj.ez_form,
 
-                        naics_code = sbaForgivenessobj.naics_code,
+                        naics_code = Convert.ToInt32(sbaForgivenessobj.naics_code),
                         ppp_loan_draw = sbaForgivenessobj.ppp_loan_draw,
                         forgive_covered_operations_expenditures = sbaForgivenessobj.forgive_covered_operations_expenditures,
                         forgive_covered_property_damage_costs = sbaForgivenessobj.forgive_covered_property_damage_costs,
@@ -241,7 +241,7 @@ namespace Claysys.PPP.Forgiveness.Methods
                         primary_name = sbaForgivenessobj.primary_name, 
                         ez_form = sbaForgivenessobj.ez_form,
 
-                        naics_code = sbaForgivenessobj.naics_code,
+                        naics_code = Convert.ToInt32(string.IsNullOrEmpty(sbaForgivenessobj.naics_code)? "0.00" : sbaForgivenessobj.naics_code), 
                         ppp_loan_draw = sbaForgivenessobj.ppp_loan_draw,
                         forgive_covered_operations_expenditures = sbaForgivenessobj.forgive_covered_operations_expenditures,
                         forgive_covered_property_damage_costs = sbaForgivenessobj.forgive_covered_property_damage_costs,

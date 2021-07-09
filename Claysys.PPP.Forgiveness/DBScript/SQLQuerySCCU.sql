@@ -554,107 +554,130 @@ GO
 /****** Object:  StoredProcedure [dbo].[Sps_ForgivenessGetAdditionalDocuments]    Script Date: 9/3/2020 3:31:50 AM ******/
 
 
-CREATE PROCEDURE [dbo].[Sps_ForgivenessGetAdditionalDocuments] (@sbaLoanNumber NVARCHAR(50))
+		/****** Object:  StoredProcedure [dbo].[Sps_ForgivenessGetAdditionalDocuments]    Script Date: 4/28/2021 6:01:40 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER PROCEDURE [dbo].[Sps_ForgivenessGetAdditionalDocuments] (@sbaLoanNumber NVARCHAR(50))
 AS
 BEGIN
 	DECLARE @loanApplicationNumber NVARCHAR(50)
 
-	SET @loanApplicationNumber = (
-			SELECT TOP 1 LoanApplicationNumber
-			FROM PPP_Loan_Forgiveness
-			WHERE SBALoanNumber = (substring(@sbaLoanNumber, 1, 8) + '-' + substring(@sbaLoanNumber, 9, 2))
+	IF (
+			(
+				SELECT count(*)
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = @sbaLoanNumber
+				) = 0
 			)
-
-(
-			SELECT [FileContent]
-				,[FileName]
+	BEGIN
+		SET @loanApplicationNumber = (
+				SELECT TOP 1 LoanApplicationNumber
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = (substring(@sbaLoanNumber, 1, 8) + '-' + substring(@sbaLoanNumber, 9, 2))
+				)
+	END
+	ELSE
+	BEGIN
+		SET @loanApplicationNumber = (
+				SELECT TOP 1 LoanApplicationNumber
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = @sbaLoanNumber
+				)
+	END (
+				SELECT [FileContent]
+					,[FileName]
+					,CASE 
+						WHEN [FileType] = 'Denial Justification'
+							THEN 3
+						WHEN [FileType] = 'Loan Application Supporting Documents for Self-Emp…Individuals, Independent Contractors and Partners'
+							THEN 4
+						WHEN [FileType] = 'Faith-Based Addendum to 2483'
+							THEN 5
+						WHEN [FileType] = 'Addendum B to 2483'
+							THEN 6
+						WHEN [FileType] = 'Addendum A to 2483'
+							THEN 7
+						WHEN [FileType] = 'Forgiveness Supporting Docs (Mortgage Interest Payments)'
+							THEN 8
+						WHEN [FileType] = 'Miscellaneous'
+							THEN 9
+						WHEN [FileType] = 'PPP Schedule A Worksheet - FTE Reduction Safe Harbor 2'
+							THEN 10
+						WHEN [FileType] = 'PPP Schedule A Worksheet - Table 2'
+							THEN 11
+						WHEN [FileType] = 'PPP Schedule A Worksheet - Table 1'
+							THEN 12
+						WHEN [FileType] = '3508 AND 3508-EZ Supporting Docs (Public Health Operating Restrictions)'
+							THEN 13
+						WHEN [FileType] = '3508-EZ Supporting Docs (FTE Certification)'
+							THEN 14
+						WHEN [FileType] = '3508 AND 3508-EZ Supporting Docs (Job Offer, Refusal, etc. Certification)'
+							THEN 15
+						WHEN [FileType] = '3508-EZ Supporting Docs (Salary AND Wage Certification)'
+							THEN 16
+						WHEN [FileType] = 'PPP Schedule A Worksheet'
+							THEN 17
+						WHEN [FileType] = 'PPP Schedule A'
+							THEN 18
+						WHEN [FileType] = 'PPP Borrower Demographic Information Form'
+							THEN 19
+						WHEN [FileType] = 'Forgiveness Supporting Docs (Utility Payments)'
+							THEN 20
+						WHEN [FileType] = 'Forgiveness Supporting Docs (Rent/Lease Payments)'
+							THEN 21
+						WHEN [FileType] = 'Forgiveness Supporting Docs (FTE)'
+							THEN 22
+						WHEN [FileType] = 'Forgiveness Supporting Docs (Payroll)'
+							THEN 23
+						WHEN [FileType] = 'Transcript of Account'
+							THEN 24
+						WHEN [FileType] = 'Borrower Note'
+							THEN 25
+						WHEN [FileType] = 'SBA Form 3508EZ'
+							THEN 26
+						WHEN [FileType] = 'SBA Form 3508'
+							THEN 27
+						WHEN [FileType] = 'SBA Form 2483'
+							THEN 30
+						WHEN [FileType] = 'SBA Form 2484'
+							THEN 31
+						WHEN [FileType] = 'Loan Application Supporting Docs (Payroll)'
+							THEN 1
+						WHEN [FileType] = 'Payroll Schedule A Line4'
+							THEN 23 -- need clarification
+						WHEN [FileType] = 'Payroll Schedule A Line9'
+							THEN 23 -- need clarification
+						WHEN [FileType] = 'SBA Form 3508S'
+							THEN 35
+						END AS DocumentType
+				FROM [dbo].[MBLAdditionalDocs]
+				WHERE LoanApplicationNumber = @loanApplicationNumber
+				)
+		
+		UNION ALL
+		
+		(
+			SELECT DD.SignedDocument AS [FileContent]
 				,CASE 
-					WHEN [FileType] = 'Denial Justification'
-						THEN 3
-					WHEN [FileType] = 'Loan Application Supporting Documents for Self-Emp…Individuals, Independent Contractors and Partners'
-						THEN 4
-					WHEN [FileType] = 'Faith-Based Addendum to 2483'
-						THEN 5
-					WHEN [FileType] = 'Addendum B to 2483'
-						THEN 6
-					WHEN [FileType] = 'Addendum A to 2483'
-						THEN 7
-					WHEN [FileType] = 'Forgiveness Supporting Docs (Mortgage Interest Payments)'
-						THEN 8
-					WHEN [FileType] = 'Miscellaneous'
-						THEN 9
-					WHEN [FileType] = 'PPP Schedule A Worksheet - FTE Reduction Safe Harbor 2'
-						THEN 10
-					WHEN [FileType] = 'PPP Schedule A Worksheet - Table 2'
-						THEN 11
-					WHEN [FileType] = 'PPP Schedule A Worksheet - Table 1'
-						THEN 12
-					WHEN [FileType] = '3508 AND 3508-EZ Supporting Docs (Public Health Operating Restrictions)'
-						THEN 13
-					WHEN [FileType] = '3508-EZ Supporting Docs (FTE Certification)'
-						THEN 14
-					WHEN [FileType] = '3508 AND 3508-EZ Supporting Docs (Job Offer, Refusal, etc. Certification)'
-						THEN 15
-					WHEN [FileType] = '3508-EZ Supporting Docs (Salary AND Wage Certification)'
-						THEN 16
-					WHEN [FileType] = 'PPP Schedule A Worksheet'
-						THEN 17
-					WHEN [FileType] = 'PPP Schedule A'
-						THEN 18
-					WHEN [FileType] = 'PPP Borrower Demographic Information Form'
-						THEN 19
-					WHEN [FileType] = 'Forgiveness Supporting Docs (Utility Payments)'
-						THEN 20
-					WHEN [FileType] = 'Forgiveness Supporting Docs (Rent/Lease Payments)'
-						THEN 21
-					WHEN [FileType] = 'Forgiveness Supporting Docs (FTE)'
-						THEN 22
-					WHEN [FileType] = 'Forgiveness Supporting Docs (Payroll)'
-						THEN 23
-					WHEN [FileType] = 'Transcript of Account'
-						THEN 24
-					WHEN [FileType] = 'Borrower Note'
-						THEN 25
-					WHEN [FileType] = 'SBA Form 3508EZ'
-						THEN 26
-					WHEN [FileType] = 'SBA Form 3508'
+					WHEN EZ.IsEZInitiated = 'FullApp'
+						THEN 'SBA Form 3508.pdf'
+					ELSE 'SBA Form 3508 EZ.pdf'
+					END AS [FileName]
+				,CASE 
+					WHEN EZ.IsEZInitiated = 'FullApp'
 						THEN 27
-					WHEN [FileType] = 'SBA Form 2483'
-						THEN 30
-					WHEN [FileType] = 'SBA Form 2484'
-						THEN 31
-					WHEN [FileType] = 'Loan Application Supporting Docs (Payroll)'
-						THEN 1
-					WHEN [FileType] = 'Payroll Schedule A Line4'
-						THEN 23 -- need clarification
-					WHEN [FileType] = 'Payroll Schedule A Line9'
-						THEN 23 -- need clarification
+					ELSE 26
 					END AS DocumentType
-			FROM [dbo].[MBLAdditionalDocs]
-			WHERE LoanApplicationNumber = @loanApplicationNumber
+			FROM PPP_Loan_Forgiveness PLF
+			INNER JOIN DocSignDocuments DD ON PLF.DocuSignID = DD.DocID
+			INNER JOIN [LF_EZAppDetails] EZ ON Ez.LoanApplicationNumber = PLF.LoanApplicationNumber
+			WHERE PLF.LoanApplicationNumber = @loanApplicationNumber
 			)
-	
-	UNION ALL
-	
-	(
-		SELECT DD.SignedDocument AS [FileContent]
-			,CASE 
-				WHEN EZ.IsEZInitiated = 'FullApp'
-					THEN 'SBA Form 3508.pdf'
-				ELSE 'SBA Form 3508 EZ.pdf'
-				END AS [FileName]
-			,CASE 
-				WHEN EZ.IsEZInitiated = 'FullApp'
-					THEN 27
-				ELSE 26
-				END AS DocumentType
-			
-		FROM PPP_Loan_Forgiveness PLF
-		INNER JOIN DocSignDocuments DD ON PLF.DocuSignID = DD.DocID
-		INNER JOIN [LF_EZAppDetails] EZ ON Ez.LoanApplicationNumber = PLF.LoanApplicationNumber
-		WHERE PLF.LoanApplicationNumber = @loanApplicationNumber
-	)
 END
+
 
 
 GO
@@ -684,46 +707,70 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[Sps_ForgivenessGetDocumentsEZ]
-(
-    @sbaLoanNumber nvarchar(50)
-)
+/****** Object:  StoredProcedure [dbo].[Sps_ForgivenessGetDocumentsEZ]    Script Date: 4/28/2021 7:03:19 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER PROCEDURE [dbo].[Sps_ForgivenessGetDocumentsEZ] (@sbaLoanNumber NVARCHAR(50))
 AS
 BEGIN
-Declare @loanApplicationNumber nvarchar(50) 
-set @loanApplicationNumber = (select top 1 LoanApplicationNumber from PPP_Loan_Forgiveness where  SBALoanNumber = (substring(@sbaLoanNumber,1,8)+'-'+substring(@sbaLoanNumber,9,2)))
+	DECLARE @loanApplicationNumber NVARCHAR(50)
 
+	IF (
+			(
+				SELECT count(*)
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = @sbaLoanNumber
+				) = 0
+			)
+	BEGIN
+		SET @loanApplicationNumber = (
+				SELECT TOP 1 LoanApplicationNumber
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = (substring(@sbaLoanNumber, 1, 8) + '-' + substring(@sbaLoanNumber, 9, 2))
+				)
+	END
+	ELSE
+	BEGIN
+		SET @loanApplicationNumber = (
+				SELECT TOP 1 LoanApplicationNumber
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = @sbaLoanNumber
+				)
+	END
 
-SELECT TOP (1000) [ID]
-      ,[LoanApplicationNumber]
-      ,[PayrollAName]
-      ,[PayrollAFile]
-      ,[PayrollBName]
-      ,[PayrollBFile]
-      ,[PayrollCName]
-      ,[PayrollCFile]
-      ,[PayrollDName]
-      ,[PayrollDFile]
-      ,[NonPayrollAName]
-      ,[NonPayrollAFile]
-      ,[NonPayrollBName]
-      ,[NonPayrollBFile]
-      ,[NonPayrollCName]
-      ,[NonPayrollCFile]
-      ,[CertifySalaryName]
-      ,[CertifySalaryFile]
-      ,[EmployeeJobName]
-      ,[EmployeeJobFile]
-      ,[EmployeeNosName]
-      ,[EmployeeNosFile]
-      ,[CompanyOpsName]
-      ,[CompanyOpsFile]
-      ,[SupportAllDocsName]
-      ,[SupportAllDocsFile]
-  FROM [dbo].[LF_EZDocs]
-  WHERE LoanApplicationNumber = @loanApplicationNumber
+	SELECT TOP (1000) [ID]
+		,[LoanApplicationNumber]
+		,[PayrollAName]
+		,[PayrollAFile]
+		,[PayrollBName]
+		,[PayrollBFile]
+		,[PayrollCName]
+		,[PayrollCFile]
+		,[PayrollDName]
+		,[PayrollDFile]
+		,[NonPayrollAName]
+		,[NonPayrollAFile]
+		,[NonPayrollBName]
+		,[NonPayrollBFile]
+		,[NonPayrollCName]
+		,[NonPayrollCFile]
+		,[CertifySalaryName]
+		,[CertifySalaryFile]
+		,[EmployeeJobName]
+		,[EmployeeJobFile]
+		,[EmployeeNosName]
+		,[EmployeeNosFile]
+		,[CompanyOpsName]
+		,[CompanyOpsFile]
+		,[SupportAllDocsName]
+		,[SupportAllDocsFile]
+	FROM [dbo].[LF_EZDocs]
+	WHERE LoanApplicationNumber = @loanApplicationNumber
 END
-GO
+
 
 /****** Object:  StoredProcedure [dbo].[Sps_ForgivenessGetDocumentsFullApp]    Script Date: 9/3/2020 3:32:34 AM ******/
 SET ANSI_NULLS ON
@@ -732,49 +779,72 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[Sps_ForgivenessGetDocumentsFullApp]
-(
-    @sbaLoanNumber nvarchar(50)
-)
+/****** Object:  StoredProcedure [dbo].[Sps_ForgivenessGetDocumentsFullApp]    Script Date: 4/28/2021 7:04:54 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER PROCEDURE [dbo].[Sps_ForgivenessGetDocumentsFullApp] (@sbaLoanNumber NVARCHAR(50))
 AS
 BEGIN
-Declare @loanApplicationNumber nvarchar(50) 
-set @loanApplicationNumber = (select top 1 LoanApplicationNumber from PPP_Loan_Forgiveness where  SBALoanNumber = (substring(@sbaLoanNumber,1,8)+'-'+substring(@sbaLoanNumber,9,2)))
+	DECLARE @loanApplicationNumber NVARCHAR(50)
 
+	IF (
+			(
+				SELECT count(*)
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = @sbaLoanNumber
+				) = 0
+			)
+	BEGIN
+		SET @loanApplicationNumber = (
+				SELECT TOP 1 LoanApplicationNumber
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = (substring(@sbaLoanNumber, 1, 8) + '-' + substring(@sbaLoanNumber, 9, 2))
+				)
+	END
+	ELSE
+	BEGIN
+		SET @loanApplicationNumber = (
+				SELECT TOP 1 LoanApplicationNumber
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = @sbaLoanNumber
+				)
+	END
 
-SELECT 
-      [PayrollCompensationName]
-      ,[PayrollCompensationFile]
-      ,[PayrollTaxFormName]
-      ,[PayrollTaxFormFile]
-      ,[PayrollPayementsName]
-      ,[PayrollPayementsFile]
-      ,[FTEDocumentationName1]
-      ,[FTEDocumentFile1]
-      ,[FTEDocumentationName2]
-      ,[FTEDocumentFile2]
-      ,[FTEDocumentationName3]
-      ,[FTEDocumentFile3]
-      ,[NonpayrollName1]
-      ,[NonpayrollFile1]
-      ,[NonpayrollName2]
-      ,[NonpayrollFile2]
-      ,[NonpayrollName3]
-      ,[NonpayrollFile3]
-      ,[AdditionalDocumentName1]
-      ,[AdditionalDocumentFile1]
-      ,[AdditionalDocumentName2]
-      ,[AdditionalDocumentFile2]
-      ,[AdditionalDocumentName3]
-      ,[AdditionalDocumentFile3]
-      ,[AdditionalDocumentName4]
-      ,[AdditionalDocumentFile4]
-      ,[CustomerSafteyFileName]
-      ,[CustomerSafteyFile]
-  FROM [dbo].[LF_ForgivenessDocuments]
-  WHERE LoanApplicationNumber = @loanApplicationNumber
+	SELECT [PayrollCompensationName]
+		,[PayrollCompensationFile]
+		,[PayrollTaxFormName]
+		,[PayrollTaxFormFile]
+		,[PayrollPayementsName]
+		,[PayrollPayementsFile]
+		,[FTEDocumentationName1]
+		,[FTEDocumentFile1]
+		,[FTEDocumentationName2]
+		,[FTEDocumentFile2]
+		,[FTEDocumentationName3]
+		,[FTEDocumentFile3]
+		,[NonpayrollName1]
+		,[NonpayrollFile1]
+		,[NonpayrollName2]
+		,[NonpayrollFile2]
+		,[NonpayrollName3]
+		,[NonpayrollFile3]
+		,[AdditionalDocumentName1]
+		,[AdditionalDocumentFile1]
+		,[AdditionalDocumentName2]
+		,[AdditionalDocumentFile2]
+		,[AdditionalDocumentName3]
+		,[AdditionalDocumentFile3]
+		,[AdditionalDocumentName4]
+		,[AdditionalDocumentFile4]
+		,[CustomerSafteyFileName]
+		,[CustomerSafteyFile]
+	FROM [dbo].[LF_ForgivenessDocuments]
+	WHERE LoanApplicationNumber = @loanApplicationNumber
 END
-GO
+
 
 /****** Object:  StoredProcedure [dbo].[sps_ForgivenessSelectStatus]    Script Date: 9/3/2020 3:32:47 AM ******/
 SET ANSI_NULLS ON
@@ -812,16 +882,22 @@ GO
 
 
 /****** Object:  StoredProcedure [dbo].[spu_ForgivenessUpdation]    Script Date: 8/14/2020 4:24:29 AM ******/
+/****** Object:  StoredProcedure [dbo].[spu_ForgivenessUpdation]    Script Date: 4/28/2021 6:11:43 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-CREATE PROCEDURE [dbo].[spu_ForgivenessUpdation] @sbaLoanNumber VARCHAR(20) = NULL
+/****** Object:  StoredProcedure [dbo].[spu_ForgivenessUpdation]    Script Date: 8/14/2020 4:24:29 AM ******/
+ALTER PROCEDURE [dbo].[spu_ForgivenessUpdation] @sbaLoanNumber VARCHAR(20) = NULL
 	,@status VARCHAR(20)
 	,@error VARCHAR(max) = NULL
 	,@slug VARCHAR(50) = NULL
 AS
 BEGIN
 	IF (
-			
-				(SELECT count(SBALoanNo)
+			(
+				SELECT count(SBALoanNo)
 				FROM ForgivenessApplication
 				WHERE SBALoanNo = @sbaLoanNumber
 				) = 0
@@ -833,7 +909,6 @@ BEGIN
 			,[SlugID]
 			,[Error]
 			,[CreatedDate]
-			
 			)
 		VALUES (
 			@sbaLoanNumber
@@ -854,20 +929,39 @@ BEGIN
 		WHERE SBALoanNo = @sbaLoanNumber
 	END
 
-   update PPP_Loan_Forgiveness
-   set
-   SBAStatus = @status
-   where SBALoanNumber = (substring(@sbaLoanNumber,1,8)+'-'+substring(@sbaLoanNumber,9,2))
+	IF (
+			(
+				SELECT count(*)
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = @sbaLoanNumber
+				) = 0
+			)
+	BEGIN
+		UPDATE PPP_Loan_Forgiveness
+		SET SBAStatus = @status
+		WHERE SBALoanNumber = (substring(@sbaLoanNumber, 1, 8) + '-' + substring(@sbaLoanNumber, 9, 2))
 
-	Update PPP_Loan_Forgiveness
-	set SBAStatus = @status,
-	Status = 'Forgiveness Sent to SBA'
-	where  SBALoanNumber = (substring(@sbaLoanNumber,1,8)+'-'+substring(@sbaLoanNumber,9,2)) and @status = 'Pending Validation'
+		UPDATE PPP_Loan_Forgiveness
+		SET SBAStatus = @status
+			,STATUS = 'Forgiveness Sent to SBA'
+		WHERE SBALoanNumber = (substring(@sbaLoanNumber, 1, 8) + '-' + substring(@sbaLoanNumber, 9, 2))
+			AND @status = 'Pending Validation'
+	END
+	ELSE
+	BEGIN
+		UPDATE PPP_Loan_Forgiveness
+		SET SBAStatus = @status
+		WHERE SBALoanNumber = @sbaLoanNumber
 
-
+		UPDATE PPP_Loan_Forgiveness
+		SET SBAStatus = @status
+			,STATUS = 'Forgiveness Sent to SBA'
+		WHERE SBALoanNumber = @sbaLoanNumber
+			AND @status = 'Pending Validation'
+	END
 			-- update tbl_SbaForgivenessMDC set [Application Status]=@status,Error=@error,slug=@slug where SBA_Loan_Number=@sbaLoanNumber OR slug=@slug;
 END
-GO
+
 
 /****** Object:  StoredProcedure [dbo].[Spu_ForgivessStatusUpdation]    Script Date: 9/3/2020 3:33:25 AM ******/
 SET ANSI_NULLS ON
@@ -881,27 +975,69 @@ GO
 
 /****** Object:  StoredProcedure [dbo].[Spu_ForgivessStatusUpdation]    Script Date: 8/14/2020 4:25:16 AM ******/
 
-CREATE PROCEDURE [dbo].[Spu_ForgivessStatusUpdation]
-(
-   @status nvarchar(50),
-   @sbaLoanNumber nvarchar(50)
-)
+/****** Object:  StoredProcedure [dbo].[Spu_ForgivessStatusUpdation]    Script Date: 4/28/2021 6:39:20 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+/****** Object:  StoredProcedure [dbo].[Spu_ForgivessStatusUpdation]    Script Date: 8/14/2020 4:25:16 AM ******/
+ALTER PROCEDURE [dbo].[Spu_ForgivessStatusUpdation] (
+	@status NVARCHAR(50)
+	,@sbaLoanNumber NVARCHAR(50)
+	)
 AS
 BEGIN
+	DECLARE @sbanumberWithOutHiphen NVARCHAR
 
-	DECLARE @sbanumberWithOutHiphen nvarchar
+	IF (
+			(
+				SELECT count(*)
+				FROM PPP_Loan_Forgiveness
+				WHERE SBALoanNumber = @sbaLoanNumber
+				) = 0
+			)
+	BEGIN
+		UPDATE PPP_Loan_Forgiveness
+		SET SBAStatus = @status
+		WHERE SBALoanNumber = (substring(@sbaLoanNumber, 1, 8) + '-' + substring(@sbaLoanNumber, 9, 2))
+	END
+	ELSE
+	BEGIN
+		UPDATE PPP_Loan_Forgiveness
+		SET SBAStatus = @status
+		WHERE SBALoanNumber = @sbaLoanNumber
+	END
 
-   update PPP_Loan_Forgiveness
-   set
-   SBAStatus = @status
-   where SBALoanNumber = (substring(@sbaLoanNumber,1,8)+'-'+substring(@sbaLoanNumber,9,2))
-
-
-   	UPDATE ForgivenessApplication
+	UPDATE ForgivenessApplication
 	SET [SBALoanNo] = @sbaLoanNumber
 		,[Status] = @status
 		,[ModifiedDate] = GETDATE()
 	WHERE SBALoanNo = @sbaLoanNumber
+END
+
+
+
+/****** Object:  StoredProcedure [dbo].[sps_ForgivenessDocumentCount]    Script Date: 4/28/2021 6:46:13 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:      <Author, , Name>
+-- Create Date: <Create Date, , >
+-- Description: <Description, , >
+-- =============================================
+CREATE PROCEDURE [dbo].[sps_ForgivenessDocumentCount]
+(
+	@sbaloanno nvarchar(50),
+	@filename nvarchar(50)
+)
+AS
+BEGIN
+    select count(*) as [Count] from ForgivenessDocument where SBANumber =  @sbaloanno and Name =  RTRIM(LTRIM(@filename))
 END
 GO
 

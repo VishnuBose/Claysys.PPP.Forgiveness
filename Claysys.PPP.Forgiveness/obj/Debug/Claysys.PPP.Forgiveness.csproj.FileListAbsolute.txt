@@ -48,3 +48,4 @@ C:\production\Claysys.PPP.Forgiveness\Claysys.PPP.Forgiveness\obj\Debug\Claysys.
 C:\production\Claysys.PPP.Forgiveness\Claysys.PPP.Forgiveness\obj\Debug\Claysys.PPP.Forgiveness.csproj.CopyComplete
 C:\production\Claysys.PPP.Forgiveness\Claysys.PPP.Forgiveness\obj\Debug\Claysys.PPP.Forgiveness.exe
 C:\production\Claysys.PPP.Forgiveness\Claysys.PPP.Forgiveness\obj\Debug\Claysys.PPP.Forgiveness.pdb
+C:\production\Claysys.PPP.Forgiveness\Claysys.PPP.Forgiveness\obj\Debug\Claysys.PPP.Forgiveness.csprojAssemblyReference.cache
